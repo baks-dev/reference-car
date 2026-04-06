@@ -1,8 +1,4 @@
 /.idea
 /vendor
-/Command
-/Migrations
-/Parser
-/Messenger/Parser
 composer.lock
 composer.phar
