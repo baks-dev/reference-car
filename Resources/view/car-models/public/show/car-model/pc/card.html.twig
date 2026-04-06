@@ -1,0 +1,17 @@
+<div class="d-flex justify-content-between p-2 rounded-4 bg-light">
+    <a href="{{ path('reference-car:car-models-petrols.public.show', {
+        'brandName': carModel.brandName|lower,
+        'modelName': carModel.name|lower,
+        'modelPetrolName': item.name|replace({'.': '', ' ': '-'})|lower,
+        'modelPetrolHP': item.hp,
+    }) }}"
+       class="w-50 text-decoration-none text-dark"
+       role="tooltip" data-bs-toggle="tooltip"
+       data-bs-html="true" data-bs-placement="left"
+       data-bs-delay="{&quot;show&quot;:600,&quot;hide&quot;:100}"
+       data-bs-original-title="">
+        <span class="text-muted">{{ item.generationName }} </span>
+        <strong>{{ item.name }}</strong> {{ item.hp }} Hp
+    </a>
+
+</div>

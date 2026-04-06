@@ -1,0 +1,13 @@
+<a href="{{ path('reference-car:car-brands.public.show', {'id': item.id}) }}" class="card rounded-4 border-0 mb-3">
+    <div class="card-image-wrap overflow-hidden rounded-4 border border-light" style="height: 100px;">
+        <div class="card-brand-logo s2" title="{{ item.brand_name }}">
+            <img src="/assets/reference-car/image/Brand/{{ item.id }}.png" alt="">
+        </div>
+    </div>
+    <div class="card-body px-3 py-2">
+        <h2 class="card-title mb-2 h6 w-100 ">
+            <div class="d-inline-block text-decoration-none text-dark text-truncate"
+                 style="max-width: 180px;">{{ item.brand_name }}</div>
+        </h2>
+    </div>
+</a>

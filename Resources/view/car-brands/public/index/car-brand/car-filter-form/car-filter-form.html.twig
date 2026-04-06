@@ -1,0 +1,39 @@
+{{ form_start(form, { attr: { id: 'carFilterForm' } }) }}
+<div class="w-100">
+    {{ form_row(form.brand) }}
+</div>
+<div class="w-100">
+    {{ form_row(form.model) }}
+</div>
+<div class="w-100">
+    {{ form_row(form.model_petrol) }}
+</div>
+<button type="submit">ssssssss</button>
+{{ form_end(form) }}
+
+
+
+
+
+
+
+{# {{ form_start(form, {'attr': {'class': 'w-100', 'id': 'carFilterForm'}}) }} #}
+{# <div class="d-flex justify-content-between gap-4 text-white"> #}
+{#    <div class="w-100"> #}
+{#        {{ form_label(form.brand) }} #}
+{#        {{ form_widget(form.brand) }} #}
+{#    </div> #}
+{#    <div class="w-100"> #}
+{#        {{ form_label(form.model) }} #}
+{#        {{ form_widget(form.model) }} #}
+{#    </div> #}
+{#    <div class="w-100"> #}
+{#        {{ form_label(form.model_petrol) }} #}
+{#        {{ form_widget(form.model_petrol) }} #}
+{#    </div> #}
+{#    <div class="w-100"> #}
+{#        {{ form_widget(form.cars_filter) }} #}
+{#    </div> #}
+{# </div> #}
+{# {{ form_widget(form._token) }} #}
+{# {{ form_end(form) }} #}

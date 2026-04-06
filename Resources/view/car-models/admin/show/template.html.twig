@@ -1,0 +1,17 @@
+{% trans_default_domain('admin.reference.car') %}
+
+{% set ROLE = 'ROLE_CAR_BRAND' %}
+
+{# ---- CSS ------------------------------------------------------------ #}
+{% block title %}
+    {{ 'admin.page.index'|trans }}
+{% endblock %}
+
+{# ---- ШАБЛОН ------------------------------------------------------------ #}
+{% extends Template('/admin/base.html.twig') %}
+
+
+{# ---- КОНТЕНТ-БЛОК ------------------------------------------------------------ #}
+{% block content %}
+    {{ include(_self|replace({ "template.html.twig": "car-model/"~baks_settings.device~"/content.html.twig" })) }}
+{% endblock %}

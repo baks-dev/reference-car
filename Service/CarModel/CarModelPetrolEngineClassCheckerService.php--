@@ -1,0 +1,103 @@
+<?php
+/*
+ *  Copyright 2025.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+
+declare(strict_types=1);
+
+namespace BaksDev\Reference\Car\Service\CarModel;
+
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use BaksDev\Reference\Car\Service\ClassCheckerServiceInterface;
+use BaksDev\Reference\Car\Service\CarModel\CarModelPetrolPowerClassCheckerServices\CarModelPetrolPowerHPClassCheckerService;
+use BaksDev\Reference\Car\Service\CarModel\CarModelPetrolPowerClassCheckerServices\CarModelPetrolPowerKWClassCheckerService;
+use BaksDev\Reference\Car\Service\CarModel\CarModelPetrolPowerClassCheckerServices\CarModelPetrolPowerPSClassCheckerService;
+
+class CarModelPetrolEngineClassCheckerService
+{
+    private LoggerInterface $logger;
+
+    public function __construct(
+        #[Target('referenceCarLogger')] LoggerInterface $logger,
+        private CarModelPetrolPowerHPClassCheckerService $modelPetrolPowerHPClassCheckerService,
+        private CarModelPetrolPowerKWClassCheckerService $modelPetrolPowerKWClassCheckerService,
+        private CarModelPetrolPowerPSClassCheckerService $modelPetrolPowerPSClassCheckerService,
+    )
+    {
+        $this->logger = $logger;
+        $this->modelPetrolPowerHPClassCheckerService = $modelPetrolPowerHPClassCheckerService;
+        $this->modelPetrolPowerKWClassCheckerService = $modelPetrolPowerKWClassCheckerService;
+        $this->modelPetrolPowerPSClassCheckerService = $modelPetrolPowerPSClassCheckerService;
+    }
+
+    /**
+     * Проверяет есть ли классы парметров двигателя комплектации модели
+     */
+    public function checkModelEnginePowerPetrol($data): void
+    {dd(4);
+        $this->logger->info('Проверка наличия классов ModelPetrolEngine: '.$data->getTitle());
+
+        $modelPetrolEngine = explode('|', $data->getEngine());
+
+        $hpParam = trim(array_filter($modelPetrolEngine, function($item) {
+            return stripos($item, 'HP') !== false;
+        })[0]);
+        $kwParam = trim(array_filter($modelPetrolEngine, function($item) {
+            return stripos($item, 'KW') !== false;
+        })[1]);
+        $psParam = trim(array_filter($modelPetrolEngine, function($item) {
+            return stripos($item, 'PS') !== false;
+        })[2]);
+
+        $modelPetrolPowerClassName = $data->getGeneration()['model']['class_name'];
+
+        $enginePowerClassName = strtoupper(
+            str_replace(' ', '', (
+            explode('|', $data->getAll()['power'])[0]
+            )
+            )
+        );
+
+        // Создаем полный физ путь для создания или проверки наличия папки
+        $collectionPath = sprintf(
+            dirname(__DIR__, 2).'%s',
+            str_replace(
+                ['BaksDev\\Reference\\Car', '\\'],
+                ['', '/'],
+                '\\Type\\Models\\Collection\\'.$modelPetrolPowerClassName.'\\Petrol\\Petrol'.$data->getClassName().$enginePowerClassName.'\\Power')
+        );
+
+        // Если папки нет, то создаем
+        if(!is_dir($collectionPath))
+        {
+            $this->logger->info('Папки для ModelPetrolPower: '.$data->getTitle().' нет. Создаем папку');
+            mkdir($collectionPath, 0755, true);
+        }
+
+        // Создаем полный namespace для класса комплектации модели
+        $modelPetrolNamespace = 'BaksDev\\Reference\\Car\\Type\\Models\\Collection\\'.$modelPetrolPowerClassName.'\\Petrol\\Petrol'.$data->getClassName().$enginePowerClassName.'\\Power';
+
+        $this->modelPetrolPowerHPClassCheckerService->checkModelPetrolPowerHPPetrol($data, $collectionPath, $hpParam, $modelPetrolNamespace);
+        $this->modelPetrolPowerKWClassCheckerService->checkModelPetrolPowerKWPetrol($data, $collectionPath, $kwParam, $modelPetrolNamespace);
+        $this->modelPetrolPowerPSClassCheckerService->checkModelPetrolPowerPSPetrol($data, $collectionPath, $psParam, $modelPetrolNamespace);
+    }
+}

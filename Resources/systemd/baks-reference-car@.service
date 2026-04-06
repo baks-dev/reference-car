@@ -1,0 +1,25 @@
+# bash
+
+# systemctl daemon-reload # Перечитывает конфигурации в /etc/systemd/system/, Не перезапускает сервисы, только обновляет их конфигурацию
+
+# systemctl enable baks-reference-car@1.service # Включает автозагрузку сервиса при старте системы. Создает символические ссылки для активации сервиса
+# systemctl disable baks-reference-car@1.service
+
+# systemctl start baks-reference-car@1.service # Запускает сервис. запускает consumer для обработки сообщений из транспорта reference-car
+# systemctl restart baks-reference-car@1.service
+# systemctl stop baks-reference-car@1.service
+
+[Unit]
+Description=reference-car
+StartLimitBurst=5
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=php /home/matlecks.baks.dev/bin/console messenger:consume reference-car reference-car-low --memory-limit=256m
+Restart=always
+
+User=unit
+Group=unit
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,25 @@
+{% trans_default_domain('admin.reference.car') %}
+
+<div class="container d-flex gap-5 mt-3">
+    <div class="w-auto">
+        <div class="icon rounded-5 border bg-contain shadow-none"
+             style="width: 350px; height: 350px;">
+            <img src="/assets/reference-car/image/Model/{{ carModel.id }}.png" alt=""
+                 style="width: 100%; height: 100%; object-fit: contain">
+        </div>
+    </div>
+    <div class="w-100 d-flex flex-column">
+        <div class="tab-content w-100">
+
+            <div class="tab-pane fade show active" id="pills-1996" role="tabpanel">
+                <div class="d-flex flex-column gap-1">
+                    {% for item in carModelPetrols.data %}
+                        {{ include(_self|replace({ "content.html.twig": "card.html.twig" })) }}
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>

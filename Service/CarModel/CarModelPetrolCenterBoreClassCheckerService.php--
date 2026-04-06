@@ -1,0 +1,129 @@
+<?php
+/*
+ *  Copyright 2025.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+
+declare(strict_types=1);
+
+namespace BaksDev\Reference\Car\Service\CarModel;
+
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Target;
+use Symfony\Component\Filesystem\Filesystem;
+
+class CarModelPetrolCenterBoreClassCheckerService
+{
+    private LoggerInterface $logger;
+
+    public function __construct(
+        #[Target('referenceCarLogger')] LoggerInterface $logger,
+    )
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * Проверяет есть ли класс Центрального отверстия CenterBore
+     */
+    public function checkModelPetrolCenterBore($data): void
+    {
+        $this->logger->info('Проверка наличия класса Центрального отверстия CenterBore: '.$data->getTitle());
+
+        $modelClassName = $data->getAll()['generation']['model']['class_name'];
+        $enginePowerClassName = strtoupper(
+            str_replace(' ', '', (
+            explode('|', $data->getAll()['power'])[0]
+            )
+            )
+        );
+
+        // Создаем полный физ путь для создания или проверки наличия папки
+        $collectionPath = sprintf(
+            dirname(__DIR__, 2).'%s',
+            str_replace(
+                ['BaksDev\\Reference\\Car', '\\'],
+                ['', '/'],
+                '\\Type\\Models\\Collection\\'.$modelClassName.'\\Petrol\\Petrol'.$data->getClassName().$enginePowerClassName)
+        );
+
+        // Если папки нет, то создаем
+        if(!is_dir($collectionPath))
+        {
+            $this->logger->info('Папки для класса Центрального отверстия CenterBore: '.$data->getTitle().' нет. Создаем папку');
+            mkdir($collectionPath, 0755, true);
+        }
+
+        // Создаем полный namespace для класса Центрального отверстия CenterBore
+        $modelPetrolCenterBoreFullNamespace = 'BaksDev\\Reference\\Car\\Type\\Models\\Collection\\'.$modelClassName.'\\Petrol\\Petrol'.$data->getClassName().$enginePowerClassName.'\\ModelPetrolCenterBore';
+
+        if(!class_exists($modelPetrolCenterBoreFullNamespace))
+        {
+            $this->logger->info('Класс Центрального отверстия CenterBore: '.$data->getTitle().' отсутствует. Создаем класс');
+            $this->generateClass($data, $collectionPath, $modelPetrolCenterBoreFullNamespace);
+        }
+        else
+        {
+            $this->logger->info('Класс Центрального отверстия CenterBore: '.$modelPetrolCenterBoreFullNamespace.' существует.');
+        }
+
+        $delay = 1000000; // 1 секунда в микросекундах
+        usleep($delay);
+
+        if(!$modelPetrolCenterBoreFullNamespace::equals($data->getTitle()))
+        {
+            $this->logger->info('Значение '.$data->getTitle().' не найдено в классе '.$modelPetrolCenterBoreFullNamespace);
+        }
+    }
+
+    /**
+     * Генерирует класс
+     *
+     * @param $data
+     * @return void
+     */
+    public function generateClass($data, $collectionPath, $modelPetrolCenterBoreFullNamespace): void
+    {
+        $filesystem = new Filesystem();
+        $filePath = $collectionPath.'/ModelPetrolCenterBore.php';
+
+        $templateNameClass = 'BaksDev\\Reference\\Car\\Generator\\Model\\ModelNameClassTemplate';
+        // Получает сгенерированное содержание класса
+        $classContent = call_user_func([$templateNameClass, 'getTemplate'], $data);
+
+        // Создает класс с сгенерированным содержанием
+        $filesystem->dumpFile($collectionPath.'/ModelPetrolCenterBore.php', $classContent);
+
+        // Скидываем кеш после создания класса
+        clearstatcache(true, $filePath);
+        if(function_exists('opcache_invalidate'))
+        {
+            opcache_invalidate($filePath, true);
+        }
+
+        //Явно загружаем класс
+        if(!class_exists($modelPetrolCenterBoreFullNamespace, false))
+        {
+            include $filePath;
+        }
+
+        $this->logger->info('Класс Центрального отверстия CenterBore для '.$data->getTitle().' создан');
+    }
+}
