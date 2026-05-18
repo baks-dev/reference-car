@@ -27,7 +27,7 @@ namespace BaksDev\Reference\Car\Type\CarModelWheels\ModelWheels\Collection;
 
 use BaksDev\Reference\Car\Type\CarModelWheels\ModelWheels\CarModelWheelsInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use BaksDev\Reference\Car\Type\CarModelPetrols\ModelPetrols\Collection\AcuraRDXTB3TB4Facelift2016201730i263hp as ModelPetrol;
+use BaksDev\Reference\Car\Type\CarModelPetrols\ModelPetrols\Collection\AcuraIntegraIAV1986198716i113hp as ModelPetrol;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
 use BaksDev\Reference\Car\Type\CarModelWheels\Id\CarModelWheelUid;
 use BaksDev\Reference\Car\Type\CarModelWheels\Backspacing\CarModelWheelBackspacing;
@@ -41,30 +41,30 @@ use BaksDev\Reference\Car\Type\CarModelWheels\Width\CarModelWheelWidth;
 
 
 #[AutoconfigureTag('baks.car.model.wheels')]
-final class AcuraRDXTB3TB4Facelift2016201730i263hpOE23560R18102V implements CarModelWheelsInterface
+final class AcuraIntegraIAV1986198716i113hpOE19560HR1485H implements CarModelWheelsInterface
 {
     /** Uid (ID) колес */
-    public const string CAR_MODEL_WHEEL_UID = '019dbe9e-dcec-7ae0-a739-fc5b6d59766a';
+    public const string CAR_MODEL_WHEEL_UID = '019e3b3c-78d8-775c-b2a1-d437508e1337';
 
 
     /** Значение колес */
-    public const string CAR_MODEL_WHEEL_VALUE = 'OE 235/60R18 102V';
+    public const string CAR_MODEL_WHEEL_VALUE = 'OE 195/60HR14 85H';
 
 
     /** Значение Возврата */
-    public const string CAR_MODEL_WHEEL_BACKSPACING_VALUE = '153';
+    public const string CAR_MODEL_WHEEL_BACKSPACING_VALUE = '123';
 
 
     /** Значение Давления */
-    public const string CAR_MODEL_WHEEL_BAR_VALUE = '2.3';
+    public const string CAR_MODEL_WHEEL_BAR_VALUE = '';
 
 
     /** Значение диамтра */
-    public const string CAR_MODEL_WHEEL_DIAMETER_VALUE = '18';
+    public const string CAR_MODEL_WHEEL_DIAMETER_VALUE = '14';
 
 
     /** Значение Диапазона смещения */
-    public const string CAR_MODEL_WHEEL_OFFSET_RANGE_VALUE = '43 - 47';
+    public const string CAR_MODEL_WHEEL_OFFSET_RANGE_VALUE = '38 - 42';
 
 
     /** Значение профиля колеса */
@@ -72,15 +72,15 @@ final class AcuraRDXTB3TB4Facelift2016201730i263hpOE23560R18102V implements CarM
 
 
     /** Значение обода колеса */
-    public const string CAR_MODEL_WHEEL_RIM_VALUE = '7.5Jx18 ET45';
+    public const string CAR_MODEL_WHEEL_RIM_VALUE = '5.5JJx14 ET40';
 
 
     /** Значение веса колеса */
-    public const string CAR_MODEL_WHEEL_TIRE_WEIGHT_VALUE = '12.4';
+    public const string CAR_MODEL_WHEEL_TIRE_WEIGHT_VALUE = '8.2';
 
 
     /** Значение ширины колеса */
-    public const string CAR_MODEL_WHEEL_WIDTH_VALUE = '235';
+    public const string CAR_MODEL_WHEEL_WIDTH_VALUE = '195';
 
 
     /** @var string[] Список для фильтрации */

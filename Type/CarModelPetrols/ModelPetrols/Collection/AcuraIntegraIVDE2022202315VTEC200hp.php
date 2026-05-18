@@ -40,7 +40,7 @@ use BaksDev\Reference\Car\Type\CarModelPetrols\Year\CarModelPetrolYear;
 final class AcuraIntegraIVDE2022202315VTEC200hp implements CarModelPetrolInterface
 {
     /** Uid (ID) комплектации */
-    public const string CAR_MODEL_PETROL_UID = '019dbe8a-1542-73d2-87fd-604ceea3399b';
+    public const string CAR_MODEL_PETROL_UID = '019e3b31-e578-78aa-af36-849f4a7d373c';
 
 
     /** Значение названия комплектации */

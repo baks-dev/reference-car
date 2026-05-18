@@ -40,7 +40,7 @@ use BaksDev\Reference\Car\Type\CarModelPetrols\Year\CarModelPetrolYear;
 final class AcuraADX2025202615VTEC190hp implements CarModelPetrolInterface
 {
     /** Uid (ID) комплектации */
-    public const string CAR_MODEL_PETROL_UID = '019dbe88-9412-757e-841d-2db86121df67';
+    public const string CAR_MODEL_PETROL_UID = '019e3b2f-2b82-7158-84d3-2e14964564fe';
 
 
     /** Значение названия комплектации */

@@ -27,7 +27,7 @@ namespace BaksDev\Reference\Car\Type\CarModelWheels\ModelWheels\Collection;
 
 use BaksDev\Reference\Car\Type\CarModelWheels\ModelWheels\CarModelWheelsInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use BaksDev\Reference\Car\Type\CarModelPetrols\ModelPetrols\Collection\AcuraRDXTC1TC2Facelift2025202620T261hp as ModelPetrol;
+use BaksDev\Reference\Car\Type\CarModelPetrols\ModelPetrols\Collection\AcuraIntegraTypeSDE52023202420VTECTURBO320hp as ModelPetrol;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
 use BaksDev\Reference\Car\Type\CarModelWheels\Id\CarModelWheelUid;
 use BaksDev\Reference\Car\Type\CarModelWheels\Backspacing\CarModelWheelBackspacing;
@@ -41,46 +41,46 @@ use BaksDev\Reference\Car\Type\CarModelWheels\Width\CarModelWheelWidth;
 
 
 #[AutoconfigureTag('baks.car.model.wheels')]
-final class AcuraRDXTC1TC2Facelift2025202620T261hpOE25545R20101V implements CarModelWheelsInterface
+final class AcuraIntegraTypeSDE52023202420VTECTURBO320hpOE26530ZR1993Y implements CarModelWheelsInterface
 {
     /** Uid (ID) колес */
-    public const string CAR_MODEL_WHEEL_UID = '019dbe9c-7db4-7b4e-8071-097a04ef09f8';
+    public const string CAR_MODEL_WHEEL_UID = '019e3b3e-406f-77cf-8110-ca242b358604';
 
 
     /** Значение колес */
-    public const string CAR_MODEL_WHEEL_VALUE = 'OE 255/45R20 101V';
+    public const string CAR_MODEL_WHEEL_VALUE = 'OE 265/30ZR19 93Y';
 
 
     /** Значение Возврата */
-    public const string CAR_MODEL_WHEEL_BACKSPACING_VALUE = '164';
+    public const string CAR_MODEL_WHEEL_BACKSPACING_VALUE = '193';
 
 
     /** Значение Давления */
-    public const string CAR_MODEL_WHEEL_BAR_VALUE = '2.5';
+    public const string CAR_MODEL_WHEEL_BAR_VALUE = '2.8';
 
 
     /** Значение диамтра */
-    public const string CAR_MODEL_WHEEL_DIAMETER_VALUE = '20';
+    public const string CAR_MODEL_WHEEL_DIAMETER_VALUE = '19';
 
 
     /** Значение Диапазона смещения */
-    public const string CAR_MODEL_WHEEL_OFFSET_RANGE_VALUE = '48 - 52';
+    public const string CAR_MODEL_WHEEL_OFFSET_RANGE_VALUE = '58 - 62';
 
 
     /** Значение профиля колеса */
-    public const string CAR_MODEL_WHEEL_PROFILE_VALUE = '45';
+    public const string CAR_MODEL_WHEEL_PROFILE_VALUE = '30';
 
 
     /** Значение обода колеса */
-    public const string CAR_MODEL_WHEEL_RIM_VALUE = '8Jx20 ET50';
+    public const string CAR_MODEL_WHEEL_RIM_VALUE = '9.5Jx19 ET60';
 
 
     /** Значение веса колеса */
-    public const string CAR_MODEL_WHEEL_TIRE_WEIGHT_VALUE = '12.9';
+    public const string CAR_MODEL_WHEEL_TIRE_WEIGHT_VALUE = '11.1';
 
 
     /** Значение ширины колеса */
-    public const string CAR_MODEL_WHEEL_WIDTH_VALUE = '255';
+    public const string CAR_MODEL_WHEEL_WIDTH_VALUE = '265';
 
 
     /** @var string[] Список для фильтрации */

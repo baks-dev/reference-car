@@ -40,7 +40,7 @@ use BaksDev\Reference\Car\Type\CarModelPetrols\Year\CarModelPetrolYear;
 final class AcuraIntegraIIIDBDC1994199518i194hp implements CarModelPetrolInterface
 {
     /** Uid (ID) комплектации */
-    public const string CAR_MODEL_PETROL_UID = '019dbe8b-6e7c-7782-ae02-5255303adc61';
+    public const string CAR_MODEL_PETROL_UID = '019e3b34-16e1-7c40-af6b-f7301461478b';
 
 
     /** Значение названия комплектации */

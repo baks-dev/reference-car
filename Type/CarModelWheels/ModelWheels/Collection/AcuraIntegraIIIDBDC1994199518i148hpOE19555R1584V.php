@@ -44,7 +44,7 @@ use BaksDev\Reference\Car\Type\CarModelWheels\Width\CarModelWheelWidth;
 final class AcuraIntegraIIIDBDC1994199518i148hpOE19555R1584V implements CarModelWheelsInterface
 {
     /** Uid (ID) колес */
-    public const string CAR_MODEL_WHEEL_UID = '019dbe8a-f5fd-7b74-96a1-737e84fd0d6d';
+    public const string CAR_MODEL_WHEEL_UID = '019e3b33-97fa-77d3-956a-d9c72e8093b8';
 
 
     /** Значение колес */
