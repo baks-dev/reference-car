@@ -25,93 +25,129 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\Tests;
 
+use BaksDev\Core\BaksDevCoreBundle;
+use BaksDev\Reference\Car\Entity\CarBrand\Image\CarBrandImage;
 use BaksDev\Reference\Car\Entity\CarModelGeneration\CarModelGeneration;
+use BaksDev\Reference\Car\Entity\CarModelGeneration\Image\CarModelGenerationImage;
 use BaksDev\Reference\Car\Entity\CarModelGeneration\Name\CarModelGenerationName;
+use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Name\CarModelGenerationName as CarModelGenerationNameField;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModel\Tests\CarModelNewAdminUseCaseTest;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\CarModelGenerationDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\CarModelGenerationHandler;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\Image\CarModelGenerationImageDTO;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DependsOnClass;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\File;
 
-/**
- * @group reference-car
- * @group reference-car-usecase
- * @group reference-car-repository
- * @group reference-car-controller
- */
 #[When(env: 'test')]
+#[Group('reference-car')]
+#[Group('reference-car-repository')]
+#[Group('reference-car-usecase')]
 class CarModelGenerationNewAdminUseCaseTest extends KernelTestCase
 {
     /**
      * Удаляем тестовые данные перед началом тестов
-     *
-     * @return void
      */
     public static function setUpBeforeClass(): void
     {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
+        /** @var EntityManagerInterface $EntityManager */
+        $EntityManager = self::getContainer()->get(EntityManagerInterface::class);
 
-        self::clearTestData($em);
-    }
-
-    /**
-     * Удаляем тестовые данные после завершения всех тестов
-     *
-     * @return void
-     */
-    public static function tearDownAfterClass(): void
-    {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
-
-        self::clearTestData($em);
-    }
-
-    /**
-     * Удаляет тестовые данные
-     *
-     * @param EntityManagerInterface $em
-     * @return void
-     */
-    private static function clearTestData(EntityManagerInterface $em): void
-    {
-        $model = $em->getRepository(CarModelGeneration::class)
+        $model = $EntityManager
+            ->getRepository(CarModelGeneration::class)
             ->findOneBy(['id' => CarModelGenerationUid::TEST]);
 
         if($model)
         {
-            $em->remove($model);
+            $EntityManager->remove($model);
         }
 
-        $modelName = $em->getRepository(CarModelGenerationName::class)
-            ->findOneBy(['modelGeneration' => CarModelGenerationUid::TEST]);
+        $modelName = $EntityManager
+            ->getRepository(CarModelGenerationName::class)
+            ->findOneBy(['generation' => CarModelGenerationUid::TEST]);
 
         if($modelName)
         {
-            $em->remove($modelName);
+            $EntityManager->remove($modelName);
         }
 
-        $em->flush();
-        $em->clear();
+        $generationImage = $EntityManager
+            ->getRepository(CarModelGenerationImage::class)
+            ->findOneBy(['generation' => CarModelGenerationUid::TEST]);
+
+        if($generationImage)
+        {
+            $EntityManager->remove($generationImage);
+        }
+
+        $EntityManager->flush();
+        $EntityManager->clear();
     }
 
+
+    #[DependsOnClass(CarModelNewAdminUseCaseTest::class)]
     public function testUseCase(): void
     {
-        $carModelGenerationHandler = self::getContainer()->get(CarModelGenerationHandler::class);
+        $CarModelGenerationHandler = self::getContainer()->get(CarModelGenerationHandler::class);
 
-        $carModelGenerationDTO = new CarModelGenerationDTO();
-        $carModelGenerationDTO->setId(new CarModelGenerationUid(CarModelGenerationUid::TEST));
-        $carModelGenerationDTO->setModel(new CarModelUid(CarModelUid::TEST));
+        $CarModelGenerationDTO = new CarModelGenerationDTO();
+        $CarModelGenerationDTO->setModel(new CarModelUid());
 
-        $carModelGenerationNameDTO = $carModelGenerationDTO->getName();
-        $carModelGenerationNameDTO->setValue(new CarModelGenerationNameField(CarModelGenerationNameField::TEST));
+        $CarModelGenerationNameDTO = $CarModelGenerationDTO->getName();
+        $CarModelGenerationNameDTO
+            ->setValue(new CarModelGenerationNameField(CarModelGenerationNameField::TEST))
+            ->setUrl(strtr(
+                strtolower(CarModelGenerationNameField::TEST),
+                ['(' => '', ')' => '', ' ' => '-', '/' => '-']
+            ));
 
-        $carModelGeneration = $carModelGenerationHandler->handle($carModelGenerationDTO);
 
-        self::assertInstanceOf(CarModelGeneration::class, $carModelGeneration);
+        /**
+         * Изображние поколения
+         */
+
+        $containerBag = self::getContainer()->get(ContainerBagInterface::class);
+        $Filesystem = self::getContainer()->get(Filesystem::class);
+
+
+        /** Создаем путь к тестовой директории */
+        $testUploadDir = implode(
+            DIRECTORY_SEPARATOR,
+            [$containerBag->get('kernel.project_dir'), 'public', 'upload', 'tests']
+        );
+
+
+        $Filesystem->copy(
+            BaksDevCoreBundle::PATH.implode(
+                DIRECTORY_SEPARATOR,
+                ['Resources', 'assets', 'img', 'empty.webp']
+            ),
+            $testUploadDir.DIRECTORY_SEPARATOR.'photo.webp'
+        );
+
+        $filePhoto = new File($testUploadDir.DIRECTORY_SEPARATOR.'photo.webp', false);
+
+
+        /** Тестируем добавление фото */
+        $image = new CarModelGenerationImageDTO()
+            ->setFile($filePhoto)
+            ->setExt('webp')
+            ->setName('test')
+            ->setSize(1);
+
+        $CarModelGenerationDTO->setImage($image);
+
+
+        $CarModelGeneration = $CarModelGenerationHandler->handle($CarModelGenerationDTO);
+
+        self::assertInstanceOf(CarModelGeneration::class, $CarModelGeneration);
     }
 }

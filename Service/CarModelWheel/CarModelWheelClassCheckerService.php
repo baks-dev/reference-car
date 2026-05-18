@@ -27,99 +27,70 @@ namespace BaksDev\Reference\Car\Service\CarModelWheel;
 
 use BaksDev\Reference\Car\BaksDevReferenceCarBundle;
 use BaksDev\Reference\Car\Generator\CarModelWheel\CarModelWheelClassTemplate;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\Filesystem\Filesystem;
 
-class CarModelWheelClassCheckerService
+final readonly class CarModelWheelClassCheckerService
 {
-    private const NAMESPACE = [
-        "Type",
-        "CarModelWheels",
-        "Id",
-        "ModelWheels",
-        "Collection",
-    ];
-
-    private string $collectionPath;
-
-    private string $carModelWheelFullNamespace;
-
-    public function __construct(
-        #[Target('referenceCarLogger')] private LoggerInterface $logger,
-    )
-    {
-        $this->collectionPath = implode(DIRECTORY_SEPARATOR, [
-            rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
-            implode(DIRECTORY_SEPARATOR, self::NAMESPACE),
-        ]);
-        $this->carModelWheelFullNamespace = implode('\\', [
-            rtrim(BaksDevReferenceCarBundle::NAMESPACE, '\\'),
-            ...self::NAMESPACE]);
-    }
-
     /**
      * Проверяет есть ли класс колеса
      */
-    public function checkCarModelWheel($data): void
+    public function checkCarModelWheel(CarModelWheelClassCheckerDTO $data): void
     {
-        $this->logger->info('Проверка наличия класса колеса: '.$data->getTire());
+        echo 'Проверка наличия класса колеса: '.$data->getTire().PHP_EOL;
 
-        /**
-         * Создаем полный физ путь для создания или проверки наличия папки
-         */
+        $shortNamespace = str_replace(BaksDevReferenceCarBundle::NAMESPACE, '', $data->getNamespace());
         $collectionPath = implode(DIRECTORY_SEPARATOR, [
-            $this->collectionPath,
-            $data->getGeneration()['model']['class_name'],
+            rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
+            str_replace('\\', DIRECTORY_SEPARATOR, $shortNamespace),
         ]);
 
+
         // Если папки нет, то создаем
-        if(!is_dir($collectionPath))
+        if(false === is_dir($collectionPath))
         {
-            $this->logger->info('Папки для класса колеса: '.$data->getTire().' нет. Создаем папку');
+            echo 'Папки для класса колеса: '.$data->getTire().' нет. Создаем папку'.PHP_EOL;
             mkdir($collectionPath, 0755, true);
         }
+
 
         /**
          * Создаем полный namespace для основного класса колеса
          */
-        $carModelWheelFullNamespace = implode('\\', [
-            $this->carModelWheelFullNamespace,
-            $data->getGeneration()['model']['class_name'],
-            $data->getClassName(),
-        ]);
+        $carModelWheelFullNamespace = $data->getNamespace().$data->getClassName();
 
-        if(!class_exists($carModelWheelFullNamespace))
+
+        if(false === class_exists($carModelWheelFullNamespace))
         {
-            $this->logger->info('Класс колеса: '.$data->getTire().' отсутствует. Создаем класс');
+            echo 'Класс колеса: '.$data->getTire().' отсутствует. Создаем класс'.PHP_EOL;
             $this->generateClass($data, $collectionPath, $carModelWheelFullNamespace);
         }
         else
         {
-            $this->logger->info('Класс колеса: '.$carModelWheelFullNamespace.' существует.');
+            echo 'Класс колеса: '.$carModelWheelFullNamespace.' существует.'.PHP_EOL;
         }
-
-        $delay = 1000000; // 1 секунда в микросекундах
-        usleep($delay);
     }
+
 
     /**
      * Генерирует класс
-     *
-     * @param $data
-     *
-     * @return void
      */
-    public function generateClass($data, $collectionPath, $carModelWheelFullNamespace): void
+    public function generateClass(
+        CarModelWheelClassCheckerDTO $data,
+        string $collectionPath,
+        string $carModelWheelFullNamespace
+    ): void
     {
         $filesystem = new Filesystem();
         $filePath = $collectionPath.'/'.$data->getClassName().'.php';
 
+
         // Получает сгенерированное содержание класса
         $classContent = CarModelWheelClassTemplate::getTemplate($data);
 
+
         // Создает класс с сгенерированным содержанием
-        $filesystem->dumpFile($collectionPath.'/'.$data->getClassName().'.php', $classContent);
+        $filesystem->dumpFile($filePath, $classContent);
+
 
         // Скидываем кеш после создания класса
         clearstatcache(true, $filePath);
@@ -128,12 +99,13 @@ class CarModelWheelClassCheckerService
             opcache_invalidate($filePath, true);
         }
 
-        //Явно загружаем класс
-        if(!class_exists($carModelWheelFullNamespace, false))
+
+        // Явно загружаем класс
+        if(false === class_exists($carModelWheelFullNamespace, false))
         {
             include $filePath;
         }
 
-        $this->logger->info('Класс колеса для '.$data->getTire().' создан');
+        echo 'Класс колеса для '.$data->getTire().' создан'.PHP_EOL;
     }
 }

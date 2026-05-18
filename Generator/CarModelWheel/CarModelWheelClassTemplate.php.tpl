@@ -25,33 +25,139 @@ declare(strict_types=1);
 
 namespace {{classNamespace}};
 
-use BaksDev\Reference\Car\Type\CarModelWheels\Id\ModelWheels\CarModelWheelsInterface;
+use BaksDev\Reference\Car\Type\CarModelWheels\ModelWheels\CarModelWheelsInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use {{modelPetrolNamespace}};
+use {{modelPetrolNamespace}} as ModelPetrol;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
 use BaksDev\Reference\Car\Type\CarModelWheels\Id\CarModelWheelUid;
+use BaksDev\Reference\Car\Type\CarModelWheels\Backspacing\CarModelWheelBackspacing;
+use BaksDev\Reference\Car\Type\CarModelWheels\Bar\CarModelWheelBar;
+use BaksDev\Reference\Car\Type\CarModelWheels\Diameter\CarModelWheelDiameter;
+use BaksDev\Reference\Car\Type\CarModelWheels\OffsetRange\CarModelWheelOffsetRange;
+use BaksDev\Reference\Car\Type\CarModelWheels\Profile\CarModelWheelProfile;
+use BaksDev\Reference\Car\Type\CarModelWheels\Rim\CarModelWheelRim;
+use BaksDev\Reference\Car\Type\CarModelWheels\TireWeight\CarModelWheelTireWeight;
+use BaksDev\Reference\Car\Type\CarModelWheels\Width\CarModelWheelWidth;
+
 
 #[AutoconfigureTag('baks.car.model.wheels')]
 final class {{className}} implements CarModelWheelsInterface
 {
-/** Uid (ID) колес */
-public const string CAR_MODEL_WHEEL_UID = '{{uid}}';
+    /** Uid (ID) колес */
+    public const string CAR_MODEL_WHEEL_UID = '{{uid}}';
 
-/** Uid (ID) модели */
-public const string CAR_MODEL_PETROL_UID = ModelPetrol::CAR_MODEL_PETROL_UID;
 
-public static function getUid(): CarModelWheelUid
-{
-return new CarModelWheelUid(self::CAR_MODEL_WHEEL_UID);
-}
+    /** Значение колес */
+    public const string CAR_MODEL_WHEEL_VALUE = '{{wheel}}';
 
-public static function getModelPetrolUid(): CarModelPetrolUid
-{
-return new CarModelPetrolUid(self::CAR_MODEL_PETROL_UID);
-}
 
-public static function sort(): int
-{
-return 2;
-}
+    /** Значение Возврата */
+    public const string CAR_MODEL_WHEEL_BACKSPACING_VALUE = '{{backspacing}}';
+
+
+    /** Значение Давления */
+    public const string CAR_MODEL_WHEEL_BAR_VALUE = '{{bar}}';
+
+
+    /** Значение диамтра */
+    public const string CAR_MODEL_WHEEL_DIAMETER_VALUE = '{{diameter}}';
+
+
+    /** Значение Диапазона смещения */
+    public const string CAR_MODEL_WHEEL_OFFSET_RANGE_VALUE = '{{offsetRange}}';
+
+
+    /** Значение профиля колеса */
+    public const string CAR_MODEL_WHEEL_PROFILE_VALUE = '{{profile}}';
+
+
+    /** Значение обода колеса */
+    public const string CAR_MODEL_WHEEL_RIM_VALUE = '{{rim}}';
+
+
+    /** Значение веса колеса */
+    public const string CAR_MODEL_WHEEL_TIRE_WEIGHT_VALUE = '{{tireWeight}}';
+
+
+    /** Значение ширины колеса */
+    public const string CAR_MODEL_WHEEL_WIDTH_VALUE = '{{width}}';
+
+
+    /** @var string[] Список для фильтрации */
+    public const array HAYSTACK = [self::CAR_MODEL_WHEEL_VALUE, self::CAR_MODEL_WHEEL_UID];
+
+
+    /** Uid (ID) комплектации */
+    public const string CAR_MODEL_PETROL_UID = ModelPetrol::CAR_MODEL_PETROL_UID;
+
+
+    public static function getUid(): CarModelWheelUid
+    {
+        return new CarModelWheelUid(self::CAR_MODEL_WHEEL_UID);
+    }
+
+    public static function getBackspacingValue(): CarModelWheelBackspacing
+    {
+        return new CarModelWheelBackspacing(self::CAR_MODEL_WHEEL_BACKSPACING_VALUE);
+    }
+
+    public static function getBarValue(): CarModelWheelBar
+    {
+        return new CarModelWheelBar(self::CAR_MODEL_WHEEL_BAR_VALUE);
+    }
+
+    public static function getDiameterValue(): CarModelWheelDiameter
+    {
+        return new CarModelWheelDiameter(self::CAR_MODEL_WHEEL_DIAMETER_VALUE);
+    }
+
+    public static function getOffsetRangeValue(): CarModelWheelOffsetRange
+    {
+        return new CarModelWheelOffsetRange(self::CAR_MODEL_WHEEL_OFFSET_RANGE_VALUE);
+    }
+
+    public static function getProfileValue(): CarModelWheelProfile
+    {
+        return new CarModelWheelProfile(self::CAR_MODEL_WHEEL_PROFILE_VALUE);
+    }
+
+    public static function getRimValue(): CarModelWheelRim
+    {
+        return new CarModelWheelRim(self::CAR_MODEL_WHEEL_RIM_VALUE);
+    }
+
+    public static function getTireWeightValue(): CarModelWheelTireWeight
+    {
+        return new CarModelWheelTireWeight(self::CAR_MODEL_WHEEL_TIRE_WEIGHT_VALUE);
+    }
+
+    public static function getWidthValue(): CarModelWheelWidth
+    {
+        return new CarModelWheelWidth(self::CAR_MODEL_WHEEL_WIDTH_VALUE);
+    }
+
+    public static function getModelPetrolUid(): CarModelPetrolUid
+    {
+        return new CarModelPetrolUid(self::CAR_MODEL_PETROL_UID);
+    }
+
+    public static function equals(mixed $value): bool
+    {
+        if (is_object($value) && method_exists($value, '__toString'))
+        {
+            $value = (string)$value;
+        }
+
+        if (is_string($value))
+        {
+            return array_any(self::HAYSTACK, static fn($item) => (mb_strtolower($value) === mb_strtolower($item)));
+        }
+
+        return false;
+    }
+
+    public static function sort(): int
+    {
+        return 2;
+    }
 }

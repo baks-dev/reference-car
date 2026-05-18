@@ -21,15 +21,12 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolYear;
 
 use BaksDev\Core\Entity\AbstractHandler;
-use BaksDev\Reference\Car\Entity\CarModelPetrol\CarModelPetrol;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\Year\CarModelPetrolYear;
-use BaksDev\Reference\Car\Messenger\Upload\CarModelPetrol\CarModelPetrolMessage;
-use BaksDev\Reference\Car\Messenger\Upload\CarModelPetrolYear\CarModelPetrolYearMessage;
-use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolYear\CarModelPetrolYearDTO;
-use Doctrine\ORM\EntityManagerInterface;
 
 final class CarModelPetrolYearHandler extends AbstractHandler
 {
@@ -49,10 +46,7 @@ final class CarModelPetrolYearHandler extends AbstractHandler
 
         $this->flush();
 
-        $this->messageDispatch->dispatch(
-            message: new CarModelPetrolYearMessage($command->getModelPetrol()),
-            transport: 'reference-car',
-        );
+        $this->messageDispatch->addClearCacheOther('reference-car');
 
 
         return $carModelPetrolYear;

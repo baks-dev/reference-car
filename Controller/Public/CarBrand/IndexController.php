@@ -21,14 +21,18 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Controller\Public\CarBrand;
 
 use BaksDev\Core\Controller\AbstractController;
+use BaksDev\Core\Type\Field\InputField;
+use BaksDev\Field\Tire\Radius\Type\TireRadiusField;
+use BaksDev\Products\Category\Repository\OneCategoryByFieldType\OneCategoryByFieldTypeInterface;
+use BaksDev\Products\Product\Forms\ProductCategoryFilter\User\ProductCategoryFilterDTO;
+use BaksDev\Products\Product\Forms\ProductCategoryFilter\User\ProductCategoryFilterForm;
 use BaksDev\Reference\Car\Forms\CarBrandFilter\CarFilterForm;
 use BaksDev\Reference\Car\Repository\AllCarBrands\AllCarBrandsInterface;
-use BaksDev\Reference\Car\Repository\CarModelPetrolById\CarModelPetrolByIdInterface;
-use BaksDev\Reference\Car\Repository\CarModelWheelsByModelPetrolId\CarModelWheelsByModelPetrolIdInterface;
-use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -37,60 +41,69 @@ use Symfony\Component\Routing\Attribute\Route;
 #[AsController]
 final class IndexController extends AbstractController
 {
-    #[Route('/auto', name: 'car-brands.public.index', methods: ['GET', 'POST'], priority: 999)]
+    #[Route('/auto', name: 'public.car-brands.index', methods: ['GET', 'POST'], priority: 999)]
     public function index(
-        Request $request,
-        AllCarBrandsInterface $allCarBrands,
-        CarModelPetrolByIdInterface $carModelPetrolById,
-        CarModelWheelsByModelPetrolIdInterface $carModelWheelsByModelPetrolId,
-        int $page = 0,
+        AllCarBrandsInterface $AllCarBrandsRepository,
+        OneCategoryByFieldTypeInterface $OneCategoryByFieldTypeRepository,
+        Request $request
     ): Response
     {
+        /** Находим любую категорию шин (где типом торгового предложения будет являться радиус) */
+        $categoryUid = $OneCategoryByFieldTypeRepository->find(new InputField(TireRadiusField::TYPE));
+
+
+        /** Фильтр по параметрам */
+        $productCategoryFilterDTO = new ProductCategoryFilterDTO($categoryUid);
+        $productFilterForm = $this->createForm(ProductCategoryFilterForm::class,
+            $productCategoryFilterDTO,
+            ['action' => $this->generateUrl('products-product:public.catalog.index')]
+        );
+
+
+        $data = $request->get('car_filter_form');
+
         $formData = [
-            'brand' => $request->request->get('brand') ?? null,
-            'model' => $request->request->get('model') ?? null,
-            'model_petrol' => $request->request->get('model_petrol') ?? null,
+            'brand' => $data['brand'] ?? null,
+            'model' => $data['model'] ?? null,
+            'generation' => $data['generation'] ?? null,
+            'petrol' => $data['petrol'] ?? null,
         ];
-        $form = $this->createForm(CarFilterForm::class, $formData);
+
+        $form = $this->createForm(
+            CarFilterForm::class,
+            $formData,
+            ['action' => $this->generateUrl('reference-car:public.car-models-petrols.show', $formData)]
+        );
         $form->handleRequest($request);
 
+
+        /* если форма отправлена AJAX - нам достаточно только формы поиска по типу автомобиля */
         if($request->isXmlHttpRequest())
         {
             return $this->render(
-                [
-                    'form' => $form->createView(),
-                ],
-                file: 'car-brand/car-filter-form/car-filter-form.html.twig',
+                ['form' => $form->createView()],
+                dir: '/',
+                file: 'public/car-filter-form/car-filter-form.html.twig',
             );
         }
 
+
+        /**
+         * При успешной отправке формы фильтрации по типу автомобиля с выбранной комплектацией отображаем подробную
+         * информацию о комплектации и размерах шин для нее
+         */
         if($form->isSubmitted() && $form->isValid())
         {
-            $data = $request->get('car_filter_form');
-
-            $carModelPetrolUid = new CarModelPetrolUid($data['model_petrol']);
-
-            $carModelPetrol = $carModelPetrolById
-                ->forModelPetrol($carModelPetrolUid)
-                ->find();
-
-            $carModelWheels = $carModelWheelsByModelPetrolId
-                ->forModelPetrol($carModelPetrolUid)
-                ->findAll();
-
-            return $this->render([
-                'form' => $form->createView(),
-                'carModelPetrol' => $carModelPetrol,
-                'carModelWheels' => $carModelWheels,
-            ],
-                file: 'car-brand/petrol-detail/template.html.twig');
+            return $this->redirectToRoute('reference-car:public.car-models-petrols.show', $formData);
         }
 
-        $query = $allCarBrands->findAll();
+
+        $query = $AllCarBrandsRepository->findAll();
 
         return $this->render([
             'form' => $form->createView(),
             'query' => $query,
+            'filter_tire' => $productFilterForm->createView(),
         ]);
     }
 }

@@ -21,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarBrand\Name;
 
 use BaksDev\Reference\Car\Type\CarBrands\Name\CarBrandName;

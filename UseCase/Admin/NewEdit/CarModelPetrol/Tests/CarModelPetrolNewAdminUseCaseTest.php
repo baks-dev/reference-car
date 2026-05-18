@@ -30,7 +30,6 @@ use BaksDev\Reference\Car\Entity\CarModelPetrol\HP\CarModelPetrolHP;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\KW\CarModelPetrolKW;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\Name\CarModelPetrolName;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\PS\CarModelPetrolPS;
-use BaksDev\Reference\Car\Entity\CarModelPetrol\SaleRegion\CarModelPetrolSaleRegion;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\Year\CarModelPetrolYear;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
 use BaksDev\Reference\Car\Type\CarModelPetrols\HP\CarModelPetrolHP as CarModelPetrolHPField;
@@ -38,138 +37,107 @@ use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
 use BaksDev\Reference\Car\Type\CarModelPetrols\KW\CarModelPetrolKW as CarModelPetrolKWField;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Name\CarModelPetrolName as CarModelPetrolNameField;
 use BaksDev\Reference\Car\Type\CarModelPetrols\PS\CarModelPetrolPS as CarModelPetrolPSField;
-use BaksDev\Reference\Car\Type\CarModelPetrols\SaleRegion\CarModelPetrolSaleRegion as CarModelPetrolSaleRegionField;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Year\CarModelPetrolYear as CarModelPetrolYearField;
-use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\Tests\CarModelGenerationNewAdminUseCaseTest;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolHandler;
-use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolSaleRegion\CarModelPetrolSaleRegionDTO;
-use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolYear\CarModelPetrolYearDTO;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DependsOnClass;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- * @group reference-car-usecase
- * @group reference-car-repository
- * @group reference-car-controller
- */
 #[When(env: 'test')]
-class CarModelPetrolNewAdminUseCaseTest extends KernelTestCase
+#[Group('reference-car')]
+#[Group('reference-car-repository')]
+#[Group('reference-car-usecase')]
+final class CarModelPetrolNewAdminUseCaseTest extends KernelTestCase
 {
     /**
      * Удаляем тестовые данные перед началом тестов
-     *
-     * @return void
      */
     public static function setUpBeforeClass(): void
     {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
+        /** @var EntityManagerInterface $EntityManager */
+        $EntityManager = self::getContainer()->get(EntityManagerInterface::class);
 
-        self::clearTestData($em);
-    }
-
-    /**
-     * Удаляем тестовые данные после завершения всех тестов
-     *
-     * @return void
-     */
-    public static function tearDownAfterClass(): void
-    {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
-
-        self::clearTestData($em);
-    }
-
-    /**
-     * Удаляет тестовые данные
-     *
-     * @param EntityManagerInterface $em
-     * @return void
-     */
-    private static function clearTestData(EntityManagerInterface $em): void
-    {
-        $carModelPetrol = $em->getRepository(CarModelPetrol::class)
+        $carModelPetrol = $EntityManager
+            ->getRepository(CarModelPetrol::class)
             ->findOneBy(['id' => CarModelPetrolUid::TEST]);
 
         if($carModelPetrol)
         {
-            $em->remove($carModelPetrol);
+            $EntityManager->remove($carModelPetrol);
         }
 
-        $modelPetrolName = $em->getRepository(CarModelPetrolName::class)
-            ->findOneBy(['modelPetrol' => CarModelPetrolUid::TEST]);
+        $modelPetrolName = $EntityManager
+            ->getRepository(CarModelPetrolName::class)
+            ->findOneBy(['petrol' => CarModelPetrolUid::TEST]);
 
         if($modelPetrolName)
         {
-            $em->remove($modelPetrolName);
+            $EntityManager->remove($modelPetrolName);
         }
 
-        $modelPetrolHP = $em->getRepository(CarModelPetrolHP::class)
-            ->findOneBy(['modelPetrol' => CarModelPetrolUid::TEST]);
+        $modelPetrolHP = $EntityManager
+            ->getRepository(CarModelPetrolHP::class)
+            ->findOneBy(['petrol' => CarModelPetrolUid::TEST]);
 
         if($modelPetrolHP)
         {
-            $em->remove($modelPetrolHP);
+            $EntityManager->remove($modelPetrolHP);
         }
 
-        $modelPetrolKW = $em->getRepository(CarModelPetrolKW::class)
-            ->findOneBy(['modelPetrol' => CarModelPetrolUid::TEST]);
+        $modelPetrolKW = $EntityManager
+            ->getRepository(CarModelPetrolKW::class)
+            ->findOneBy(['petrol' => CarModelPetrolUid::TEST]);
 
         if($modelPetrolKW)
         {
-            $em->remove($modelPetrolKW);
+            $EntityManager->remove($modelPetrolKW);
         }
 
-        $modelPetrolPS = $em->getRepository(CarModelPetrolPS::class)
-            ->findOneBy(['modelPetrol' => CarModelPetrolUid::TEST]);
+        $modelPetrolPS = $EntityManager
+            ->getRepository(CarModelPetrolPS::class)
+            ->findOneBy(['petrol' => CarModelPetrolUid::TEST]);
 
         if($modelPetrolPS)
         {
-            $em->remove($modelPetrolPS);
+            $EntityManager->remove($modelPetrolPS);
         }
 
-        $modelPetrolYears = $em->getRepository(CarModelPetrolYear::class)
+        $modelPetrolYears = $EntityManager
+            ->getRepository(CarModelPetrolYear::class)
             ->findBy(['petrol' => CarModelPetrolUid::TEST]);
 
         if($modelPetrolYears)
         {
             foreach($modelPetrolYears as $modelPetrolYear)
             {
-                $em->remove($modelPetrolYear);
+                $EntityManager->remove($modelPetrolYear);
             }
         }
 
-        $modelPetrolSaleRegions = $em->getRepository(CarModelPetrolSaleRegion::class)
-            ->findBy(['petrol' => CarModelPetrolUid::TEST]);
-
-        if($modelPetrolSaleRegions)
-        {
-            foreach($modelPetrolSaleRegions as $modelPetrolSaleRegion)
-            {
-                $em->remove($modelPetrolSaleRegion);
-            }
-        }
-
-        $em->flush();
-        $em->clear();
+        $EntityManager->flush();
+        $EntityManager->clear();
     }
 
+
+    #[DependsOnClass(CarModelGenerationNewAdminUseCaseTest::class)]
     public function testUseCase(): void
     {
         $carModelPetrolHandler = self::getContainer()->get(CarModelPetrolHandler::class);
-        $carModelPetrolUid = new CarModelPetrolUid(CarModelPetrolUid::TEST);
 
         $carModelPetrolDTO = new CarModelPetrolDTO();
-        $carModelPetrolDTO->setId($carModelPetrolUid);
-        $carModelPetrolDTO->setModel(new CarModelUid(CarModelUid::TEST));
-        $carModelPetrolDTO->setGeneration(new CarModelGenerationUid(CarModelGenerationUid::TEST));
+        $carModelPetrolDTO->setGeneration(new CarModelGenerationUid());
 
         $carModelPetrolNameDTO = $carModelPetrolDTO->getName();
-        $carModelPetrolNameDTO->setValue(new CarModelPetrolNameField(CarModelPetrolNameField::TEST));
+        $carModelPetrolNameDTO
+            ->setValue(new CarModelPetrolNameField(CarModelPetrolNameField::TEST))
+            ->setUrl(strtr(
+                strtolower(CarModelPetrolNameField::TEST),
+                ['(' => '', ')' => '', ' ' => '-', '/' => '-']
+            ));
 
         $carModelPetrolHPDTO = $carModelPetrolDTO->getHp();
         $carModelPetrolHPDTO->setValue(new CarModelPetrolHPField(CarModelPetrolHPField::TEST));
@@ -180,15 +148,8 @@ class CarModelPetrolNewAdminUseCaseTest extends KernelTestCase
         $carModelPetrolPSDTO = $carModelPetrolDTO->getPs();
         $carModelPetrolPSDTO->setValue(new CarModelPetrolPSField(CarModelPetrolPSField::TEST));
 
-        $carModelPetrolYearDTO = new CarModelPetrolYearDTO();
+        $carModelPetrolYearDTO = $carModelPetrolDTO->getYear();
         $carModelPetrolYearDTO->setValue(new CarModelPetrolYearField(CarModelPetrolYearField::TEST));
-        $carModelPetrolYearDTO->setModelPetrol($carModelPetrolUid);
-        $carModelPetrolDTO->addYear($carModelPetrolYearDTO);
-
-        $carModelPetrolSaleRegionDTO = new CarModelPetrolSaleRegionDTO();
-        $carModelPetrolSaleRegionDTO->setValue(new CarModelPetrolSaleRegionField(CarModelPetrolSaleRegionField::TEST));
-        $carModelPetrolSaleRegionDTO->setModelPetrol($carModelPetrolUid);
-        $carModelPetrolDTO->addSaleRegion($carModelPetrolSaleRegionDTO);
 
         $carModelPetrol = $carModelPetrolHandler->handle($carModelPetrolDTO);
 

@@ -25,39 +25,24 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Messenger\WheelSize\CarBrand;
 
-use BaksDev\Reference\Car\Type\CarBrands\Id\Brands\CarBrandsInterface;
+use BaksDev\Reference\Car\Type\CarBrands\Brands\CarBrandsInterface;
 
-final class ParserCarBrandMessage
+final readonly class ParserCarBrandMessage
 {
-
-    /** Url бренда */
-    private string $url;
-
-
-    /** Имя класса бренда */
-    private string $className;
-
-    /** Имя бренда */
-    private string $title;
-
-
     public function __construct(
-        string $url,
-        string $className,
-        string $title
-    )
-    {
-        $this->url = (string) $url;
-        $this->className = (string) $className;
-        $this->title = (string) $title;
-    }
+        private string $url,
+        private string $className,
+        private string $title,
+        private ?bool $isForced = false,
+    ) {}
 
 
     /** Url бренда */
     public function getUrl(): string
     {
-        return (string) $this->url;
+        return $this->url;
     }
+
 
     /** Namespace класса бренда */
     public function getNamespace(): string
@@ -65,11 +50,13 @@ final class ParserCarBrandMessage
         return CarBrandsInterface::BRAND_NAMESPACE.'Collection\\';
     }
 
+
     /** Имя класса бренда */
     public function getClassName(): string
     {
         return $this->className;
     }
+
 
     /** Имя бренда */
     public function getTitle(): string
@@ -77,21 +64,9 @@ final class ParserCarBrandMessage
         return $this->title;
     }
 
-    /**
-     * Возвращает все поля сообщения в виде массива
-     *
-     * @return array{
-     *     url: string,
-     *     class_name: string,
-     *     title: string
-     * }
-     */
-    public function getAll(): array
+
+    public function isForced(): bool
     {
-        return [
-            'href' => $this->url,
-            'class_name' => $this->className,
-            'title' => $this->title,
-        ];
+        return $this->isForced;
     }
 }

@@ -21,10 +21,11 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolYear;
 
 use BaksDev\Reference\Car\Entity\CarModelPetrol\Year\CarModelPetrolYearInterface;
-use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Year\CarModelPetrolYear as YearField;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -32,9 +33,6 @@ final class CarModelPetrolYearDTO implements CarModelPetrolYearInterface
 {
     #[Assert\NotBlank]
     private ?YearField $value = null;
-
-    #[Assert\NotBlank]
-    private CarModelPetrolUid $modelPetrol;
 
     public function getValue(): YearField
     {
@@ -46,15 +44,4 @@ final class CarModelPetrolYearDTO implements CarModelPetrolYearInterface
         $this->value = $value;
         return $this;
     }
-
-    public function getModelPetrol(): CarModelPetrolUid
-    {
-        return $this->modelPetrol;
-    }
-
-    public function setModelPetrol(CarModelPetrolUid $modelPetrol): void
-    {
-        $this->modelPetrol = $modelPetrol;
-    }
-
 }

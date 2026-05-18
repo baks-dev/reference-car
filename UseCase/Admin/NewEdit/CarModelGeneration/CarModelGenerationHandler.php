@@ -21,11 +21,14 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration;
 
 use BaksDev\Core\Entity\AbstractHandler;
 use BaksDev\Reference\Car\Entity\CarModelGeneration\CarModelGeneration;
-use BaksDev\Reference\Car\Messenger\Upload\CarModelGeneration\CarModelGenerationMessage;
+use BaksDev\Reference\Car\Entity\CarModelGeneration\Image\CarModelGenerationImage;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\Image\CarModelGenerationImageDTO;
 
 final class CarModelGenerationHandler extends AbstractHandler
 {
@@ -33,7 +36,32 @@ final class CarModelGenerationHandler extends AbstractHandler
     {
         $this->setCommand($command);
 
-        $carModelGeneration = $this->prePersistOrUpdate(CarModelGeneration::class, ['id' => $command->getId()]);
+        $CarModelGeneration = $this->prePersistOrUpdate(CarModelGeneration::class, ['id' => $command->getId()]);
+
+
+        /**
+         * Загружаем изображение (если есть)
+         *
+         * @var CarModelGeneration $CarModelGeneration
+         * @var CarModelGenerationImage $image
+         */
+        $image = $CarModelGeneration->getUploadImage();
+
+        if(false === empty($image))
+        {
+            $CarModelGenerationImageDTO = $image->getEntityDto();
+
+
+            /** @var CarModelGenerationImageDTO|false $CarModelGenerationImageDTO */
+            if(
+                false !== $CarModelGenerationImageDTO
+                && false === empty($CarModelGenerationImageDTO->getFile())
+            )
+            {
+                $this->imageUpload->upload($CarModelGenerationImageDTO->getFile(), $image);
+            }
+        }
+
 
         /** Валидация всех объектов */
         if($this->validatorCollection->isInvalid())
@@ -41,14 +69,11 @@ final class CarModelGenerationHandler extends AbstractHandler
             return $this->validatorCollection->getErrorUniqid();
         }
 
+
         $this->flush();
 
-        $this->messageDispatch->dispatch(
-            message: new CarModelGenerationMessage($command->getId()),
-            transport: 'reference-car',
-        );
+        $this->messageDispatch->addClearCacheOther('reference-car');
 
-
-        return $carModelGeneration;
+        return $CarModelGeneration;
     }
 }

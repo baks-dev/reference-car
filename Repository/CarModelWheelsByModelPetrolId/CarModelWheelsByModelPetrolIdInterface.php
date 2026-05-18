@@ -16,15 +16,18 @@
  *
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Repository\CarModelWheelsByModelPetrolId;
 
-use BaksDev\Core\Services\Paginator\PaginatorInterface;
-use BaksDev\Reference\Car\Entity\CarModelPetrol\CarModelPetrol;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
+use Generator;
 
 interface CarModelWheelsByModelPetrolIdInterface
 {
-    public function forModelPetrol(CarModelPetrolUid|CarModelPetrol $modelPetrol): self;
-
-    public function findAll(): PaginatorInterface;
+    /**
+     * Метод возвращает все комплектации принадлежащие модели
+     * @return Generator<CarModelWheelsByModelPetrolIdResult>
+     */
+    public function findAll(CarModelPetrolUid $petrol): Generator;
 }

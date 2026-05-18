@@ -1,0 +1,27 @@
+{# @var item \BaksDev\Reference\Car\Repository\AllCarModelPetrols\AllCarModelPetrolsResult #}
+
+<tr class="vertical-middle" id="{{ item.id }}">
+
+    <td class="text-nowrap py-3"></td>
+
+    <td>{{ item.name }}</td>
+
+    <td>{{ item.generationName }}</td>
+
+    <td>{{ item.modelName }}</td>
+
+    <td>{{ item.brandName }}</td>
+
+    <td class="text-center">
+        <a
+                href='{{ path(
+                    'reference-car:public.car-models-petrols.show',
+                    { brand: item.brandUrl, model: item.modelUrl, generation: item.generationUrl, petrol: item.url }
+                ) }}'
+                class="badge text-bg-light text-decoration-none"
+        >
+            Перейти
+        </a>
+    </td>
+
+</tr>

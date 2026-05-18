@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Messenger\WheelSize\CarModelGeneration;
 
+use BaksDev\Reference\Car\Command\Parser\RunParserWheelSizeCommand;
 use BaksDev\Reference\Car\Messenger\WheelSize\WheelSize;
 use DateInterval;
 use Psr\Log\LoggerInterface;
@@ -34,19 +35,13 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 final class ParserCarModelGenerationRequest extends WheelSize
 {
-    /* Протокол и домен парсинга */
-    private const WHEEL_SIZE_URI = 'https://www.wheel-size.com';
-
     /* Задержка между запросами в секундах */
-    private const REQUEST_DELAY = 4;
+    private const int REQUEST_DELAY = 4;
 
     public function __construct(
-        #[Target('referenceCarLogger')] private LoggerInterface $logger,
-        private CacheInterface $cache,
-    )
-    {
-        $this->cache = $cache;
-    }
+        #[Target('referenceCarLogger')] private readonly LoggerInterface $logger,
+        private readonly CacheInterface $cache,
+    ) {}
 
     /**
      * Получает HTML-контент по указанному URL.
@@ -58,8 +53,9 @@ final class ParserCarModelGenerationRequest extends WheelSize
     public function fetchHtml(string $url): string|false
     {
         $cacheKey = md5('parser_request_'.$url);
-        $url = str_starts_with($url, 'http') ? $url : self::WHEEL_SIZE_URI.$url;
+        $url = str_starts_with($url, 'http') ? $url : RunParserWheelSizeCommand::WHEEL_SIZE_URL.$url;
 
+$this->cache->delete($cacheKey);
         /**
          * Получает HTML из кеша,
          * либо получает html из запроса
@@ -70,22 +66,22 @@ final class ParserCarModelGenerationRequest extends WheelSize
          */
         $html = $this->cache->get($cacheKey, function(ItemInterface $item) use ($url): string|false {
 
+            $item->expiresAfter(DateInterval::createFromDateString('1 second'));
+
+
             $client = $this->createClient();
             echo 'Создали клиент для '.$url.PHP_EOL;
 
-            $item->expiresAfter(1);
             sleep(self::REQUEST_DELAY);
 
             $this->logger->info('Выполняем запрос на '.$url);
-            $response = $client->request('GET', $url);
+
+            $client->request('GET', $url);
 
             $content = $client->getPageSource();
 
-            if(isset($client))
-            {
-                echo 'Закрыли клиент для '.$url.PHP_EOL;
-                $client->quit();
-            }
+            echo 'Закрыли клиент для '.$url.PHP_EOL;
+            $client->quit();
 
             if(empty($content)/* || $response->getStatusCode() !== 200*/)
             {
@@ -96,7 +92,7 @@ final class ParserCarModelGenerationRequest extends WheelSize
 
             $item->expiresAfter(DateInterval::createFromDateString('1 week'));
 
-            return $content ?: false;
+            return $content;
         });
 
         if(false === $html)

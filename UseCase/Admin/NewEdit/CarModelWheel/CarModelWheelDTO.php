@@ -21,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelWheel;
 
 use BaksDev\Reference\Car\Entity\CarModelWheel\CarModelWheelInterface;
@@ -68,10 +70,13 @@ final class CarModelWheelDTO implements CarModelWheelInterface
 
     #[Assert\NotBlank]
     #[Assert\Uuid]
-    private CarModelPetrolUid $modelPetrol;
+    private CarModelPetrolUid $petrol;
 
     public function __construct()
     {
+        $this->id = new CarModelWheelUid();
+        $this->petrol = new CarModelPetrolUid();
+
         $this->diameter = new CarModelWheelDiameterDTO();
         $this->profile = new CarModelWheelProfileDTO();
         $this->width = new CarModelWheelWidthDTO();
@@ -87,9 +92,10 @@ final class CarModelWheelDTO implements CarModelWheelInterface
         return $this->id;
     }
 
-    public function setId(CarModelWheelUid $id): void
+    public function setId(CarModelWheelUid $id): self
     {
         $this->id = $id;
+        return $this;
     }
 
     public function getDiameter(): CarModelWheelDiameterDTO
@@ -132,13 +138,14 @@ final class CarModelWheelDTO implements CarModelWheelInterface
         return $this->tireWeight;
     }
 
-    public function getModelPetrol(): CarModelPetrolUid
+    public function getPetrol(): CarModelPetrolUid
     {
-        return $this->modelPetrol;
+        return $this->petrol;
     }
 
-    public function setModelPetrol(CarModelPetrolUid $modelPetrol): void
+    public function setPetrol(CarModelPetrolUid $modelPetrol): self
     {
-        $this->modelPetrol = $modelPetrol;
+        $this->petrol = $modelPetrol;
+        return $this;
     }
 }

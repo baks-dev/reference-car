@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright 2025.  Baks.dev <admin@baks.dev>
+ *  Copyright 2026.  Baks.dev <admin@baks.dev>
 *
 *  Permission is hereby granted, free of charge, to any person obtaining a copy
 *  of this software and associated documentation files (the "Software"), to deal
@@ -23,35 +23,66 @@
 
 declare(strict_types=1);
 
-namespace BaksDev\Reference\Car\Type\CarModels\Id\Models\Collection;
+namespace {{namespace}};
 
-use BaksDev\Reference\Car\Type\CarModels\Id\Models\CarModelsInterface;
+use BaksDev\Reference\Car\Type\CarModels\Models\CarModelsInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
+use BaksDev\Reference\Car\Type\CarModels\Name\CarModelName;
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
 use {{brandNamespace}} as Brand;
 
 #[AutoconfigureTag('baks.car.models')]
 final class {{className}} implements CarModelsInterface
 {
-/** Uid (ID) модели */
-public const string CAR_MODEL_UID = '{{uid}}';
+    /** Uid (ID) модели */
+    public const string CAR_MODEL_UID = '{{uid}}';
 
-/** Uid (ID) бренда */
-public const string CAR_BRAND_UID = Brand::CAR_BRAND_UID;
 
-public static function getUid(): CarModelUid
-{
-return new CarModelUid(self::CAR_MODEL_UID);
-}
+    /** Значение названия модели */
+    public const string CAR_MODEL_VALUE = '{{modelTitle}}';
 
-public static function getBrandUid(): CarBrandUid
-{
-return new CarBrandUid(static::CAR_BRAND_UID);
-}
 
-public static function sort(): int
-{
-return 2;
-}
+    /** @var string[] Список для фильтрации */
+    public const array HAYSTACK = [self::CAR_MODEL_VALUE, self::CAR_MODEL_UID];
+
+
+    /** Uid (ID) бренда */
+    public const string CAR_BRAND_UID = Brand::CAR_BRAND_UID;
+
+
+    public static function getUid(): CarModelUid
+    {
+        return new CarModelUid(self::CAR_MODEL_UID);
+    }
+
+    public static function getValue(): CarModelName
+    {
+        return new CarModelName(self::CAR_MODEL_VALUE);
+    }
+
+    public static function getBrandUid(): CarBrandUid
+    {
+        return new CarBrandUid(self::CAR_BRAND_UID);
+    }
+
+    public static function sort(): int
+    {
+        return 2;
+    }
+
+    public static function equals(mixed $value): bool
+    {
+        if (is_object($value) && method_exists($value, '__toString'))
+        {
+            $value = (string) $value;
+        }
+
+        if (is_string($value))
+        {
+            return array_any(self::HAYSTACK, static fn($item) => (mb_strtolower($value) === mb_strtolower($item)));
+        }
+
+        return false;
+    }
 }

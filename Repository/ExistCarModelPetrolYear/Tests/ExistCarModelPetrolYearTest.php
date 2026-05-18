@@ -10,9 +10,6 @@ use BaksDev\Reference\Car\Type\CarModelPetrols\Year\ModelPetrols\Collection\Inte
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- */
 #[Group('reference-car')]
 #[When(env: 'test')]
 class ExistCarModelPetrolYearTest extends KernelTestCase

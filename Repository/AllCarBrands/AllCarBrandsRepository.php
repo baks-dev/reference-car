@@ -21,25 +21,39 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Repository\AllCarBrands;
 
 use BaksDev\Core\Doctrine\DBALQueryBuilder;
+use BaksDev\Core\Form\Search\SearchDTO;
 use BaksDev\Core\Services\Paginator\PaginatorInterface;
 use BaksDev\Reference\Car\Entity\CarBrand\CarBrand;
+use BaksDev\Reference\Car\Entity\CarBrand\Image\CarBrandImage;
 use BaksDev\Reference\Car\Entity\CarBrand\Name\CarBrandName;
+use Generator;
 
 final class AllCarBrandsRepository implements AllCarBrandsInterface
 {
+    private ?SearchDTO $search = null;
+
     public function __construct(
         private readonly DBALQueryBuilder $DBALQueryBuilder,
-        private readonly PaginatorInterface $paginator,
+        private readonly PaginatorInterface $Paginator
     ) {}
 
-    public function findAll(): PaginatorInterface
+    public function search(SearchDTO $search): self
+    {
+        $this->search = $search;
+        return $this;
+    }
+
+    private function builder(): DBALQueryBuilder
     {
         $dbal = $this->DBALQueryBuilder
             ->createQueryBuilder(self::class)
             ->bindLocal();
+
 
         /**
          * Получаем id бренад
@@ -48,20 +62,76 @@ final class AllCarBrandsRepository implements AllCarBrandsInterface
             ->select('brand.id')
             ->from(CarBrand::class, 'brand');
 
+
         /**
-         * Получаем название бренда
+         * Получаем название и url бренда
          */
         $dbal
             ->addSelect('name.value as name')
-            ->leftJoin(
+            ->addSelect('name.url')
+            ->join(
                 'brand',
                 CarBrandName::class,
                 'name',
                 'name.brand = brand.id',
             );
 
+
+        /**
+         * Получаем изображение бренда
+         */
+        $dbal
+            ->addSelect('image.ext as image_ext')
+            ->addSelect('image.cdn as image_cdn')
+            ->addSelect("
+			    CASE
+			       WHEN image.name IS NOT NULL 
+			       THEN CONCAT ('/upload/".$dbal->table(CarBrandImage::class)."' , '/', image.name)
+			       ELSE NULL
+			    END AS image_name
+		    ")
+            ->leftJoin('brand', CarBrandImage::class, 'image', 'image.brand = brand.id');
+
+
+        /* Поиск */
+        if($this->search?->getQuery())
+        {
+            $dbal
+                ->createSearchQueryBuilder($this->search)
+                ->addSearchLike('name.value');
+        }
+
+
+        return $dbal;
+    }
+
+
+    /**
+     * Метод получает все сохраненные в базе бренды
+     * @return Generator<AllCarBrandsResult>
+     */
+    public function findAll(): Generator
+    {
+        $dbal = $this->builder();
+
         $dbal->orderBy('name.value');
 
-        return $this->paginator->fetchAllHydrate($dbal, AllCarBrandsResult::class);
+        return $dbal
+            ->enableCache('reference-car', 3600)
+            ->fetchAllHydrate(AllCarBrandsResult::class);
+    }
+
+
+    /**
+     * Метод получает все сохраненные в базе бренды в виде пагинатора
+     * @return PaginatorInterface<AllCarBrandsResult>
+     */
+    public function findAllPaginator(): PaginatorInterface
+    {
+        $dbal = $this->builder();
+
+        $dbal->orderBy('name.value');
+
+        return $this->Paginator->fetchAllHydrate($dbal, AllCarBrandsResult::class);
     }
 }

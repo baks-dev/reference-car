@@ -25,54 +25,46 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Messenger\WheelSize\CarBrandImage;
 
-final class ParserCarBrandImageMessage
+final readonly class ParserCarBrandImageMessage
 {
-    /** Url картинки бренда */
-    private string $imageSrc;
-
-    /** Имя бренда */
-    private string $title;
-
-    /** Имя класса бренда */
-    private string $className;
-
-    /** Namespace класса бренда */
-    private string $classNamespace;
-
     public function __construct(
-        string $imageSrc,
-        string $title,
-        string $className,
-        string $classNamespace
-    )
-    {
-        $this->imageSrc = (string) $imageSrc;
-        $this->title = (string) $title;
-        $this->className = (string) $className;
-        $this->classNamespace = (string) $classNamespace;
-    }
+        private string $imageSrc,
+        private string $title,
+        private string $className,
+        private string $classNamespace,
+        private ?bool $isForced = false,
+    ) {}
 
     public function getImageSrc(): string
     {
         return $this->imageSrc;
     }
 
-    /** Имя модели */
+
+    /** Имя бренда */
     public function getTitle(): string
     {
         return $this->title;
     }
 
+
+    /** Имя класса бренда */
     public function getClassName(): string
     {
         return $this->className;
     }
 
-    /** Namespace класса модели */
+
+    /** Namespace класса бренда */
     public function getNamespace(): string
     {
         return $this->classNamespace;
     }
 
 
+    /** Необходимо ли игнорировать дедубликатор */
+    public function isForced(): bool
+    {
+        return $this->isForced;
+    }
 }

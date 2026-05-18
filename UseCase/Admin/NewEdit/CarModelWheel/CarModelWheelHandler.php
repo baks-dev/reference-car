@@ -21,11 +21,12 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelWheel;
 
 use BaksDev\Core\Entity\AbstractHandler;
 use BaksDev\Reference\Car\Entity\CarModelWheel\CarModelWheel;
-use BaksDev\Reference\Car\Messenger\Upload\CarModelWheel\CarModelWheelMessage;
 
 final class CarModelWheelHandler extends AbstractHandler
 {
@@ -35,18 +36,17 @@ final class CarModelWheelHandler extends AbstractHandler
 
         $carModelWheel = $this->prePersistOrUpdate(CarModelWheel::class, ['id' => $command->getId()]);
 
+        
         /** Валидация всех объектов */
         if($this->validatorCollection->isInvalid())
         {
             return $this->validatorCollection->getErrorUniqid();
         }
 
+
         $this->flush();
 
-        $this->messageDispatch->dispatch(
-            message: new CarModelWheelMessage($command->getId()),
-            transport: 'reference-car',
-        );
+        $this->messageDispatch->addClearCacheOther('reference-car');
 
         return $carModelWheel;
     }

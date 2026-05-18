@@ -29,9 +29,6 @@ use BaksDev\Users\User\Tests\TestUserAccount;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- */
 #[When(env: 'test')]
 final class CarBrandShowAdminControllerTest extends WebTestCase
 {
@@ -41,7 +38,7 @@ final class CarBrandShowAdminControllerTest extends WebTestCase
     /** Доступ по роли ROLE_CAR_BRAND_SHOW */
     public function testRoleSuccessful(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $usr = TestUserAccount::getModer(self::ROLE);
 
@@ -55,7 +52,7 @@ final class CarBrandShowAdminControllerTest extends WebTestCase
     /** Доступ по роли ROLE_ADMIN */
     public function testRoleAdminSuccessful(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $usr = TestUserAccount::getAdmin();
 
@@ -68,7 +65,7 @@ final class CarBrandShowAdminControllerTest extends WebTestCase
     /** Доступ по роли ROLE_USER */
     public function testRoleUserFiled(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $usr = TestUserAccount::getUsr();
         $client->loginUser($usr, 'user');
@@ -81,7 +78,7 @@ final class CarBrandShowAdminControllerTest extends WebTestCase
     public function testGuestFiled(): void
     {
         self::ensureKernelShutdown();
-        $client = static::createClient();
+        $client = self::createClient();
         $client->request('GET', self::URL);
 
         // Full authentication is required to access this resource

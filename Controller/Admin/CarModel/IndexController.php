@@ -21,9 +21,13 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Controller\Admin\CarModel;
 
 use BaksDev\Core\Controller\AbstractController;
+use BaksDev\Core\Form\Search\SearchDTO;
+use BaksDev\Core\Form\Search\SearchForm;
 use BaksDev\Core\Listeners\Event\Security\RoleSecurity;
 use BaksDev\Reference\Car\Repository\AllCarModels\AllCarModelsInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,21 +36,30 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[AsController]
-#[RoleSecurity(['ROLE_CAR_MODEL', 'ROLE_CAR_MODEL_INDEX'])]
+#[RoleSecurity(['ROLE_REFERENCE_CAR_INDEX'])]
 final class IndexController extends AbstractController
 {
-    #[Route('/admin/car-models/{page<\d+>}', name: 'car-models.admin.index', methods: ['GET', 'POST'])]
-    public function index(
-        Request $request,
-        AllCarModelsInterface $allCarModels,
-        int $page = 0,
-    ): Response
+    #[Route('/admin/car-models/{page<\d+>}', name: 'admin.car-model.index', methods: ['GET', 'POST'])]
+    public function index(Request $request, AllCarModelsInterface $AllCarModels, int $page = 0): Response
     {
-        // Получаем список всех брендов
-        $query = $allCarModels->findAll();
+        // Поиск
+        $search = new SearchDTO();
 
-        return $this->render([
-            'query' => $query,
-        ]);
+        $searchForm = $this
+            ->createForm(
+                type: SearchForm::class,
+                data: $search,
+                options: ['action' => $this->generateUrl('reference-car:admin.car-model.index')]
+            )
+            ->handleRequest($request);
+
+
+        // Получаем список всех брендов
+        $query = $AllCarModels
+            ->search($search)
+            ->findAll();
+
+
+        return $this->render(['query' => $query, 'search' => $searchForm->createView()]);
     }
 }

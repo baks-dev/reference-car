@@ -21,11 +21,12 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol;
 
 use BaksDev\Core\Entity\AbstractHandler;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\CarModelPetrol;
-use BaksDev\Reference\Car\Messenger\Upload\CarModelPetrol\CarModelPetrolMessage;
 
 final class CarModelPetrolHandler extends AbstractHandler
 {
@@ -35,18 +36,17 @@ final class CarModelPetrolHandler extends AbstractHandler
 
         $carModelPetrol = $this->prePersistOrUpdate(CarModelPetrol::class, ['id' => $command->getId()]);
 
+
         /** Валидация всех объектов */
         if($this->validatorCollection->isInvalid())
         {
             return $this->validatorCollection->getErrorUniqid();
         }
 
+
         $this->flush();
 
-        $this->messageDispatch->dispatch(
-            message: new CarModelPetrolMessage($command->getId()),
-            transport: 'reference-car',
-        );
+        $this->messageDispatch->addClearCacheOther('reference-car');
 
         return $carModelPetrol;
     }

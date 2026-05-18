@@ -1,4 +1,25 @@
 <?php
+/*
+ * Copyright 2026.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 
 declare(strict_types=1);
 
@@ -7,12 +28,15 @@ namespace BaksDev\Reference\Car\Repository\AllCarBrands;
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
 use BaksDev\Reference\Car\Type\CarBrands\Name\CarBrandName;
 
-final class AllCarBrandsResult
+final readonly class AllCarBrandsResult
 {
     public function __construct(
-        private readonly string $id,
-        private readonly string $name,
-
+        private string $id,
+        private string $name,
+        private string $url,
+        private ?string $image_name,
+        private ?string $image_ext,
+        private ?bool $image_cdn,
     ) {}
 
     public function getId(): CarBrandUid
@@ -20,18 +44,28 @@ final class AllCarBrandsResult
         return new CarBrandUid($this->id);
     }
 
-    public function getStringId(): string
-    {
-        return $this->id;
-    }
-
     public function getName(): CarBrandName
     {
         return new CarBrandName($this->name);
     }
 
-    public function getStringName(): string
+    public function getUrl(): string
     {
-        return $this->name;
+        return $this->url;
+    }
+
+    public function getImageName(): ?string
+    {
+        return $this->image_name;
+    }
+
+    public function getImageExt(): ?string
+    {
+        return $this->image_ext;
+    }
+
+    public function getImageCdn(): bool
+    {
+        return true === $this->image_cdn;
     }
 }

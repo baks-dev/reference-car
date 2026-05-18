@@ -21,19 +21,18 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol;
 
 use BaksDev\Reference\Car\Entity\CarModelPetrol\CarModelPetrolInterface;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
-use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolHP\CarModelPetrolHPDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolKW\CarModelPetrolKWDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolName\CarModelPetrolNameDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolPS\CarModelPetrolPSDTO;
-use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolSaleRegion\CarModelPetrolSaleRegionDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolYear\CarModelPetrolYearDTO;
-use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 
 final class CarModelPetrolDTO implements CarModelPetrolInterface
@@ -54,17 +53,8 @@ final class CarModelPetrolDTO implements CarModelPetrolInterface
     #[Assert\Valid]
     private CarModelPetrolPSDTO $ps;
 
-    /** @var ArrayCollection<CarModelPetrolYearDTO> */
     #[Assert\Valid]
-    private ArrayCollection $year;
-
-    /** @var ArrayCollection<CarModelPetrolSaleRegionDTO> */
-    #[Assert\Valid]
-    private ArrayCollection $saleRegion;
-
-    #[Assert\NotBlank]
-    #[Assert\Uuid]
-    private CarModelUid $model;
+    private CarModelPetrolYearDTO $year;
 
     #[Assert\NotBlank]
     #[Assert\Uuid]
@@ -72,12 +62,12 @@ final class CarModelPetrolDTO implements CarModelPetrolInterface
 
     public function __construct()
     {
+        $this->id = new CarModelPetrolUid();
         $this->name = new CarModelPetrolNameDTO();
         $this->hp = new CarModelPetrolHPDTO();
         $this->kw = new CarModelPetrolKWDTO();
         $this->ps = new CarModelPetrolPSDTO();
-        $this->year = new ArrayCollection();
-        $this->saleRegion = new ArrayCollection();
+        $this->year = new CarModelPetrolYearDTO();
     }
 
     public function getId(): CarModelPetrolUid
@@ -110,40 +100,15 @@ final class CarModelPetrolDTO implements CarModelPetrolInterface
         return $this->ps;
     }
 
-    public function getYear(): ArrayCollection
+    public function getYear(): CarModelPetrolYearDTO
     {
         return $this->year;
     }
 
-    public function addYear(CarModelPetrolYearDTO $yearDTO): void
+    public function setYear(CarModelPetrolYearDTO $year): self
     {
-        if(!$this->year->contains($yearDTO))
-        {
-            $this->year->add($yearDTO);
-        }
-    }
-
-    public function getSaleRegion(): ArrayCollection
-    {
-        return $this->saleRegion;
-    }
-
-    public function addSaleRegion(CarModelPetrolSaleRegionDTO $regionDTO): void
-    {
-        if(!$this->saleRegion->contains($regionDTO))
-        {
-            $this->saleRegion->add($regionDTO);
-        }
-    }
-
-    public function getModel(): CarModelUid
-    {
-        return $this->model;
-    }
-
-    public function setModel(CarModelUid $model): void
-    {
-        $this->model = $model;
+        $this->year = $year;
+        return $this;
     }
 
     public function getGeneration(): CarModelGenerationUid
@@ -151,8 +116,9 @@ final class CarModelPetrolDTO implements CarModelPetrolInterface
         return $this->generation;
     }
 
-    public function setGeneration(CarModelGenerationUid $generation): void
+    public function setGeneration(CarModelGenerationUid $generation): self
     {
         $this->generation = $generation;
+        return $this;
     }
 }

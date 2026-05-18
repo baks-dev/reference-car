@@ -9,9 +9,6 @@ use BaksDev\Reference\Car\Type\CarModelWheels\Id\CarModelWheelUid;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- */
 #[Group('reference-car')]
 #[When(env: 'test')]
 class ExistCarModelWheelTest extends KernelTestCase

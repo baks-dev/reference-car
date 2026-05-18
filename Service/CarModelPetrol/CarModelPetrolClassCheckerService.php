@@ -27,101 +27,68 @@ namespace BaksDev\Reference\Car\Service\CarModelPetrol;
 
 use BaksDev\Reference\Car\BaksDevReferenceCarBundle;
 use BaksDev\Reference\Car\Generator\CarModelPetrol\CarModelPetrolClassTemplate;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\Filesystem\Filesystem;
 
-class CarModelPetrolClassCheckerService
+final readonly class CarModelPetrolClassCheckerService
 {
-    private const NAMESPACE = [
-        "Type",
-        "CarModelPetrols",
-        "Id",
-        "ModelPetrols",
-        "Collection",
-    ];
-
-    private string $collectionPath;
-
-    private string $modelPetrolFullNamespace;
-
-    public function __construct(
-        #[Target('referenceCarLogger')] private LoggerInterface $logger,
-    )
-    {
-        $this->collectionPath = implode(DIRECTORY_SEPARATOR, [
-            rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
-            implode(DIRECTORY_SEPARATOR, self::NAMESPACE),
-        ]);
-        $this->modelPetrolFullNamespace = implode('\\', [
-            rtrim(BaksDevReferenceCarBundle::NAMESPACE, '\\'),
-            ...self::NAMESPACE]);
-    }
-
     /**
      * Проверяет есть ли класс комплектации модели
      */
-    public function checkModelPetrol($data): void
+    public function checkModelPetrol(CarModelPetrolClassCheckerDTO $data): void
     {
-        $this->logger->info('Проверка наличия класса ModelPetrol: '.$data->getTitle());
+       echo 'Проверка наличия класса ModelPetrol: '.$data->getTitle().PHP_EOL;
 
-        $modelClassName = $data->getGeneration()['model']['class_name'];
-        $enginePowerClassName = strtoupper(
-            str_replace(' ', '', (
-            explode('|', $data->getAll()['power'])[0]
-            ),
-            ),
-        );
-
-        // Создаем полный физ путь для создания или проверки наличия папки
+        $shortNamespace = str_replace(BaksDevReferenceCarBundle::NAMESPACE, '', $data->getNamespace());
         $collectionPath = implode(DIRECTORY_SEPARATOR, [
-            $this->collectionPath,
-            $modelClassName,
-            'Petrol'.$data->getClassName().$enginePowerClassName,
+            rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
+            str_replace('\\', DIRECTORY_SEPARATOR, $shortNamespace),
         ]);
 
+
         // Если папки нет, то создаем
-        if(!is_dir($collectionPath))
+        if(false === is_dir($collectionPath))
         {
-            $this->logger->info('Папки для ModelPetrol: '.$data->getTitle().' нет. Создаем папку');
+            echo 'Папки для ModelPetrol: '.$data->getTitle().' нет. Создаем папку'.PHP_EOL;
             mkdir($collectionPath, 0755, true);
         }
 
-        // Создаем полный namespace для класса комплектации модели
-        $modelPetrolFullNamespace = implode('\\', [
-            $this->modelPetrolFullNamespace,
-            $modelClassName,
-            'Petrol'.$data->getClassName().$enginePowerClassName,
-            'ModelPetrol']);
 
-        if(!class_exists($modelPetrolFullNamespace))
+        // Создаем полный namespace для класса комплектации модели
+        $modelPetrolFullNamespace = $data->getNamespace().$data->getClassName();
+
+
+        if(false === class_exists($modelPetrolFullNamespace))
         {
-            $this->logger->info('Класс для основного класса модели: '.$data->getTitle().' отсутствует. Создаем класс');
+            echo 'Класс для основного класса комплектации: '.$data->getTitle().' отсутствует. Создаем класс'.PHP_EOL;
             $this->generateClass($data, $collectionPath, $modelPetrolFullNamespace);
         }
         else
         {
-            $this->logger->info('Класс ModelPetrol: '.$modelPetrolFullNamespace.' существует.');
+            echo 'Класс ModelPetrol: '.$modelPetrolFullNamespace.' существует.'.PHP_EOL;
         }
     }
 
+
     /**
      * Генерирует класс
-     *
-     * @param $data
-     *
-     * @return void
      */
-    public function generateClass($data, $collectionPath, $modelPetrolFullNamespace): void
+    public function generateClass(
+        CarModelPetrolClassCheckerDTO $data,
+        string $filePath,
+        string $modelPetrolFullNamespace
+    ): void
     {
         $filesystem = new Filesystem();
-        $filePath = $collectionPath.'/ModelPetrol.php';
+        $filePath = $filePath.'/'.$data->getClassName().'.php';
+
 
         // Получает сгенерированное содержание класса
         $classContent = CarModelPetrolClassTemplate::getTemplate($data);
 
+
         // Создает класс с сгенерированным содержанием
-        $filesystem->dumpFile($collectionPath.'/ModelPetrol.php', $classContent);
+        $filesystem->dumpFile($filePath, $classContent);
+
 
         // Скидываем кеш после создания класса
         clearstatcache(true, $filePath);
@@ -130,12 +97,14 @@ class CarModelPetrolClassCheckerService
             opcache_invalidate($filePath, true);
         }
 
+
         //Явно загружаем класс
-        if(!class_exists($modelPetrolFullNamespace, false))
+        if(false === class_exists($modelPetrolFullNamespace, false))
         {
             include $filePath;
         }
 
-        $this->logger->info('Класс ModelPetrol '.$data->getTitle().' создан');
+
+        echo 'Класс ModelPetrol '.$data->getTitle().' создан'.PHP_EOL;
     }
 }

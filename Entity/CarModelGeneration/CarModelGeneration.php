@@ -1,5 +1,4 @@
 <?php
-
 /*
  *  Copyright 2025.  Baks.dev <admin@baks.dev>
  *
@@ -22,15 +21,19 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarModelGeneration;
 
 use BaksDev\Core\Entity\EntityState;
+use BaksDev\Reference\Car\Entity\CarModelGeneration\Image\CarModelGenerationImage;
 use BaksDev\Reference\Car\Entity\CarModelGeneration\Name\CarModelGenerationName;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 use Symfony\Component\Validator\Constraints as Assert;
+
 
 /* CarModelGeneration */
 
@@ -45,8 +48,21 @@ class CarModelGeneration extends EntityState
     #[ORM\Column(type: CarModelGenerationUid::TYPE)]
     private CarModelGenerationUid $id;
 
+
+    /** Название поколения */
     #[ORM\OneToOne(targetEntity: CarModelGenerationName::class, mappedBy: 'generation', cascade: ['all'])]
     private CarModelGenerationName $name;
+
+
+    /** Изображение */
+    #[ORM\OneToOne(
+        targetEntity: CarModelGenerationImage::class,
+        mappedBy: 'generation',
+        cascade: ['all'],
+        fetch: 'EAGER'
+    )]
+    private ?CarModelGenerationImage $image = null;
+
 
     /** ID модели */
     #[Assert\NotBlank]
@@ -111,5 +127,10 @@ class CarModelGeneration extends EntityState
     public function setModel(CarModelUid $model): void
     {
         $this->model = $model;
+    }
+
+    public function getUploadImage(): ?CarModelGenerationImage
+    {
+        return $this->image;
     }
 }

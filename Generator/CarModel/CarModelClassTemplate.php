@@ -1,23 +1,48 @@
 <?php
+/*
+ * Copyright 2026.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+
+declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Generator\CarModel;
 
+use BaksDev\Reference\Car\Service\CarModel\CarModelClassCheckerDTO;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
 
-class CarModelClassTemplate
+final class CarModelClassTemplate
 {
-    public static function getTemplate($data): string
+    public static function getTemplate(CarModelClassCheckerDTO $data): string
     {
         $uid = new CarModelUid();
-        $model = $data->getAll();
-        $className = $model['class_name'];
-        $brandNamespace = 'BaksDev\\Reference\\Car\\Type\\CarBrands\\Id\\Brands\\Collection\\'.$model['brand']['class_name'];
+
+        $brandNamespace = $data->getBrand()->getNamespace().$data->getBrand()->getClassName();
 
         $template = file_get_contents(__DIR__.'/CarModelClassTemplate.php.tpl');
 
+        $namespace = str_ends_with($data->getNamespace(), '\\') ? substr($data->getNamespace(), 0, -1) : $data->getNamespace();
+
         return str_replace(
-            ['{{className}}', '{{brandNamespace}}', '{{uid}}'],
-            [$className, $brandNamespace, (string) $uid],
+            ['{{className}}', '{{namespace}}', '{{brandNamespace}}', '{{uid}}', '{{modelTitle}}'],
+            [$data->getClassName(), $namespace, $brandNamespace, (string) $uid, $data->getTitle()],
             $template,
         );
     }

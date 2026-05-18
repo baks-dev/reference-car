@@ -21,14 +21,20 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Controller\Public\CarModelPetrol;
 
 use BaksDev\Core\Controller\AbstractController;
+use BaksDev\Core\Type\Field\InputField;
+use BaksDev\Field\Tire\Radius\Type\TireRadiusField;
+use BaksDev\Products\Category\Repository\OneCategoryByFieldType\OneCategoryByFieldTypeInterface;
+use BaksDev\Products\Product\Forms\ProductCategoryFilter\User\ProductCategoryFilterDTO;
+use BaksDev\Products\Product\Forms\ProductCategoryFilter\User\ProductCategoryFilterForm;
 use BaksDev\Reference\Car\Forms\CarBrandFilter\CarFilterForm;
-use BaksDev\Reference\Car\Repository\CarModelPetrolByNameAndHP\CarModelPetrolByNameAndHPInterface;
-use BaksDev\Reference\Car\Repository\CarModelWheelsByModelPetrolNameAndHP\CarModelWheelsByModelPetrolNameAndHPInterface;
-use BaksDev\Reference\Car\Type\CarModelPetrols\HP\CarModelPetrolHP;
-use BaksDev\Reference\Car\Type\CarModelPetrols\Name\CarModelPetrolName;
+use BaksDev\Reference\Car\Repository\CarModelPetrolByUrl\CarModelPetrolByUrlInterface;
+use BaksDev\Reference\Car\Repository\CarModelWheelsByModelPetrolId\CarModelWheelsByModelPetrolIdInterface;
+use BaksDev\Reference\Car\Repository\CarModelWheelsByModelPetrolUrl\CarModelWheelsByModelPetrolUrlInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -37,57 +43,88 @@ use Symfony\Component\Routing\Attribute\Route;
 #[AsController]
 final class ShowController extends AbstractController
 {
-    #[Route('/auto/{brandName}/{modelName}/{modelPetrolName}/{modelPetrolHP}', name: 'car-models-petrols.public.show', methods: ['GET'])]
+    #[Route(
+        '/auto/{brand}/{model}/{generation}/{petrol}',
+        name: 'public.car-models-petrols.show',
+        methods: ['GET', 'POST']
+    )]
     public function show(
-        $brandName,
-        $modelName,
-        $modelPetrolName,
-        $modelPetrolHP,
-        CarModelPetrolByNameAndHPInterface $carModelPetrolByNameAndHP,
-        CarModelWheelsByModelPetrolNameAndHPInterface $carModelWheelsByModelPetrolId,
+        string $brand,
+        string $model,
+        string $generation,
+        string $petrol,
+        CarModelPetrolByUrlInterface $CarModelPetrolByUrlRepository,
+        CarModelWheelsByModelPetrolIdInterface $CarModelWheelsByModelPetrolIdRepository,
+        OneCategoryByFieldTypeInterface $OneCategoryByFieldTypeRepository,
+        CarModelWheelsByModelPetrolUrlInterface $CarModelWheelsByModelPetrolUrlRepository,
         Request $request,
     ): Response
     {
-        $form = $this->createForm(CarFilterForm::class);
+        /** Находим любую категорию шин (где типом торгового предложения будет являться радиус) */
+        $categoryUid = $OneCategoryByFieldTypeRepository->find(new InputField(TireRadiusField::TYPE));
+
+
+        /** Фильтр по параметрам */
+        $productCategoryFilterDTO = new ProductCategoryFilterDTO($categoryUid);
+        $productFilterForm = $this->createForm(ProductCategoryFilterForm::class,
+            $productCategoryFilterDTO,
+            ['action' => $this->generateUrl('products-product:public.catalog.index')]
+        );
+
+
+        $data = $request->get('car_filter_form');
+
+        $formData = empty($data['brand']) ?
+            [
+                'brand' => $brand,
+                'model' => $model,
+                'generation' => $generation,
+                'petrol' => $petrol,
+            ] :
+        [
+            'brand' => $data['brand'] ?? null,
+            'model' => $data['model'] ?? null,
+            'generation' => $data['generation'] ?? null,
+            'petrol' => $data['petrol'] ?? null,
+        ];
+
+        $form = $this->createForm(
+            CarFilterForm::class,
+            $formData,
+            ['action' => $this->generateUrl('reference-car:public.car-models-petrols.show', $formData)]
+        );
         $form->handleRequest($request);
 
+
+        /* если форма отправлена AJAX - нам достаточно только формы поиска по типу автомобиля */
+        if($request->isXmlHttpRequest())
+        {
+            return $this->render(
+                ['form' => $form->createView()],
+                dir: '/',
+                file: 'public/car-filter-form/car-filter-form.html.twig',
+            );
+        }
+
+
+        /**
+         * При успешной отправке формы фильтрации по типу автомобиля с выбранной комплектацией отображаем подробную
+         * информацию о комплектации и размерах шин для нее
+         */
         if($form->isSubmitted() && $form->isValid())
         {
-            $data = $form->getData();
+            return $this->redirectToRoute('reference-car:public.car-models-petrols.show', $formData);
         }
 
-        $modelPetrolName = str_replace('-', ' ', $modelPetrolName);
-
-        // Ищем числа в начале строки
-        if(preg_match('/^(\d+)/', $modelPetrolName, $matches))
-        {
-            $number = $matches[1];
-
-            // Если число двузначное, вставляем точку после первой цифры
-            if(strlen($number) >= 2)
-            {
-                $formattedNumber = substr($number, 0, 1).'.'.substr($number, 1);
-                $modelPetrolName = preg_replace('/^\d+/', $formattedNumber, $modelPetrolName);
-            }
-        }
-
-        $modelPetrolName = new CarModelPetrolName($modelPetrolName);
-        $modelPetrolHP = new CarModelPetrolHP($modelPetrolHP);
-
-        $carModelPetrol = $carModelPetrolByNameAndHP
-            ->forModelPetrolName($modelPetrolName)
-            ->forModelPetrolHP($modelPetrolHP)
-            ->find();
-
-        $carModelWheels = $carModelWheelsByModelPetrolId
-            ->forModelPetrolName($modelPetrolName)
-            ->forModelPetrolHP($modelPetrolHP)
-            ->findAll();
+        $carModelPetrol = $CarModelPetrolByUrlRepository->find($petrol);
+        $carModelPetrolUid = $carModelPetrol->getId();
+        $carModelWheels = $CarModelWheelsByModelPetrolIdRepository->findAll($carModelPetrolUid);
 
         return $this->render([
-            'carModelPetrol' => $carModelPetrol,
-            'carModelWheels' => $carModelWheels,
             'form' => $form->createView(),
+            'carModelPetrol' => $carModelPetrol,
+            'carModelWheels' => iterator_to_array($carModelWheels),
+            'filter_tire' => $productFilterForm->createView(),
         ]);
     }
 }

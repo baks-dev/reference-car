@@ -27,7 +27,8 @@ use BaksDev\Core\Controller\AbstractController;
 use BaksDev\Core\Listeners\Event\Security\RoleSecurity;
 use BaksDev\Core\Type\UidType\ParamConverter;
 use BaksDev\Reference\Car\Repository\CarModelById\CarModelByIdInterface;
-use BaksDev\Reference\Car\Repository\CarModelPetrolsByModel\CarModelPetrolsByModelIdInterface;
+use BaksDev\Reference\Car\Repository\CarModelGenerationsByModel\CarModelGenerationsByModelInterface;
+use BaksDev\Reference\Car\Repository\CarModelPetrolsByGeneration\CarModelPetrolsByGenerationIdInterface;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -37,24 +38,20 @@ use Symfony\Component\Routing\Attribute\Route;
 #[RoleSecurity(['ROLE_CAR_MODEL', 'ROLE_CAR_MODEL_SHOW'])]
 final class ShowController extends AbstractController
 {
-    #[Route('/admin/car-model/{id}', name: 'car-models.admin.show', methods: ['GET'])]
+    #[Route('/admin/car-model/{id}', name: 'admin.car-model.show', methods: ['GET'])]
     public function show(
         #[ParamConverter(CarModelUid::class)] CarModelUid $id,
-        CarModelByIdInterface $carModelById,
-        CarModelPetrolsByModelIdInterface $carModelPetrolsByModelId,
+        CarModelByIdInterface $CarModelByIdRepository,
+        CarModelGenerationsByModelInterface $CarModelGenerationsByModelRepository,
     ): Response
     {
-        $carModel = $carModelById
-            ->forModel($id)
-            ->find();
+        $carModel = $CarModelByIdRepository->find($id);
 
-        $carModelPetrols = $carModelPetrolsByModelId
-            ->forModel($id)
-            ->findAll();
+        $carGenerations = $CarModelGenerationsByModelRepository->findAll($id);
 
         return $this->render([
             'carModel' => $carModel,
-            'carModelPetrols' => $carModelPetrols,
+            'carGenerations' => $carGenerations,
         ]);
     }
 }

@@ -21,15 +21,19 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Controller\Public\CarModel;
 
 use BaksDev\Core\Controller\AbstractController;
-use BaksDev\Core\Type\UidType\ParamConverter;
+use BaksDev\Core\Type\Field\InputField;
+use BaksDev\Field\Tire\Radius\Type\TireRadiusField;
+use BaksDev\Products\Category\Repository\OneCategoryByFieldType\OneCategoryByFieldTypeInterface;
+use BaksDev\Products\Product\Forms\ProductCategoryFilter\User\ProductCategoryFilterDTO;
+use BaksDev\Products\Product\Forms\ProductCategoryFilter\User\ProductCategoryFilterForm;
 use BaksDev\Reference\Car\Forms\CarBrandFilter\CarFilterForm;
-use BaksDev\Reference\Car\Repository\CarModelByName\CarModelByNameInterface;
-use BaksDev\Reference\Car\Repository\CarModelPetrolsByModelName\CarModelPetrolsByModelNameInterface;
-use BaksDev\Reference\Car\Type\CarModels\Name\CarModelName;
-use BaksDev\Users\User\Type\Id\UserUid;
+use BaksDev\Reference\Car\Repository\CarModelByUrl\CarModelByUrlInterface;
+use BaksDev\Reference\Car\Repository\CarModelGenerationsByModelUrl\CarModelGenerationsByModelUrlInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -38,37 +42,73 @@ use Symfony\Component\Routing\Attribute\Route;
 #[AsController]
 final class ShowController extends AbstractController
 {
-    #[Route('/auto/{brandName}/{modelName}', name: 'car-models.public.show', methods: ['GET'])]
+    #[Route('/auto/{brandName}/{modelName}', name: 'public.car-model.show', methods: ['GET', 'POST'])]
     public function show(
-        $brandName,
-        #[ParamConverter(CarModelName::class, key: 'modelName')] $modelName = null,
-        CarModelByNameInterface $carModelByName,
-        CarModelPetrolsByModelNameInterface $carModelPetrolsByModelName,
+        string $brandName,
+        string $modelName,
+        CarModelByUrlInterface $CarModelByUrlRepository,
+        CarModelGenerationsByModelUrlInterface $CarModelGenerationsByModelUrlRepository,
+        OneCategoryByFieldTypeInterface $OneCategoryByFieldTypeRepository,
         Request $request,
     ): Response
     {
-        $modelName = new CarModelName($modelName);
+        /** Находим любую категорию шин (где типом торгового предложения будет являться радиус) */
+        $categoryUid = $OneCategoryByFieldTypeRepository->find(new InputField(TireRadiusField::TYPE));
 
-        $form = $this->createForm(CarFilterForm::class);
-        $form->handleRequest($request);
+
+        /** Фильтр по параметрам */
+        $productCategoryFilterDTO = new ProductCategoryFilterDTO($categoryUid);
+        $productFilterForm = $this->createForm(ProductCategoryFilterForm::class,
+            $productCategoryFilterDTO,
+            ['action' => $this->generateUrl('products-product:public.catalog.index')]
+        );
+
+
+        $carModel = $CarModelByUrlRepository->find($modelName);
+
+        $data = $request->get('car_filter_form');
+
+        $formData = false === empty($data['brand']) ?
+            [
+                'brand' => $data['brand'],
+                'model' => $data['model'] ?? null,
+                'generation' => $data['generation'] ?? null,
+                'petrol' => $data['petrol'] ?? null,
+            ] :
+            ['brand' => $brandName, 'model' => $modelName, 'generation' => null, 'petrol' => null];
+
+        $form = $this
+            ->createForm(
+                CarFilterForm::class,
+                $formData,
+                ['action' => $this->generateUrl('reference-car:public.car-models-petrols.show', $formData)]
+            )
+            ->handleRequest($request);
 
         if($form->isSubmitted() && $form->isValid())
         {
-            $data = $form->getData();
+            return $this->redirectToRoute('reference-car:public.car-models-petrols.show', $formData);
         }
 
-        $carModel = $carModelByName
-            ->forModelName($modelName)
-            ->find();
 
-        $carModelPetrols = $carModelPetrolsByModelName
-            ->forModelName($modelName)
-            ->findAll();
+        /* если форма отправлена AJAX - нам достаточно только формы поиска по типу автомобиля */
+        if($request->isXmlHttpRequest())
+        {
+            return $this->render(
+                ['form' => $form->createView()],
+                dir: '/',
+                file: 'public/car-filter-form/car-filter-form.html.twig',
+            );
+        }
+
+
+        $carModelGenerations = $CarModelGenerationsByModelUrlRepository->findAll($modelName);
 
         return $this->render([
             'carModel' => $carModel,
-            'carModelPetrols' => $carModelPetrols,
+            'carModelGenerations' => $carModelGenerations,
             'form' => $form->createView(),
+            'filter_tire' => $productFilterForm->createView(),
         ]);
     }
 }

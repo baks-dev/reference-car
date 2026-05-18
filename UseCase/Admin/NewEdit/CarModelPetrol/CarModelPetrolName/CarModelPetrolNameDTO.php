@@ -21,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolName;
 
 use BaksDev\Reference\Car\Entity\CarModelPetrol\Name\CarModelPetrolNameInterface;
@@ -32,6 +34,9 @@ final class CarModelPetrolNameDTO implements CarModelPetrolNameInterface
     #[Assert\NotBlank]
     private ?NameField $value = null;
 
+    #[Assert\NotBlank]
+    private ?string $url = null;
+
     public function getValue(): NameField
     {
         return $this->value;
@@ -41,5 +46,16 @@ final class CarModelPetrolNameDTO implements CarModelPetrolNameInterface
     {
         $this->value = $value;
         return $this;
+    }
+
+    public function setUrl(?string $url): self
+    {
+        $this->url = $url;
+        return $this;
+    }
+
+    public function getUrl(): ?string
+    {
+        return $this->url;
     }
 }

@@ -21,16 +21,12 @@ final class CarModelPetrolsByModelNameRepository implements CarModelPetrolsByMod
     private CarModelNameField|false $modelName = false;
 
     public function __construct(
-        private DBALQueryBuilder $DBALQueryBuilder,
+        private readonly DBALQueryBuilder $DBALQueryBuilder,
         private readonly PaginatorInterface $paginator,
     ) {}
 
     /**
      * Передаем в метод кастомный тип для поля названия для дальнейшей передачи в запрос
-     *
-     * @param CarModelNameField $modelName
-     *
-     * @return $this
      */
     public function forModelName(CarModelNameField $modelName): self
     {
@@ -53,6 +49,7 @@ final class CarModelPetrolsByModelNameRepository implements CarModelPetrolsByMod
 
         $dbal = $this->DBALQueryBuilder->createQueryBuilder(self::class);
 
+
         /**
          * Получаем id комплектации
          */
@@ -60,10 +57,10 @@ final class CarModelPetrolsByModelNameRepository implements CarModelPetrolsByMod
             ->select('modelPetrol.id')
             ->from(CarModelPetrol::class, 'modelPetrol')
             ->leftJoin(
-                'modelPetrol',
+                'model_petrol',
                 CarModel::class,
                 'model',
-                'model.id = modelPetrol.model',
+                'model.id = model_petrol.model',
             );
 
         /**

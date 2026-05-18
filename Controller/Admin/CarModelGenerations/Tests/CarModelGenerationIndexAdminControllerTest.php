@@ -29,19 +29,16 @@ use BaksDev\Users\User\Tests\TestUserAccount;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- */
 #[When(env: 'test')]
 final class CarModelGenerationIndexAdminControllerTest extends WebTestCase
 {
     private const string URL = '/admin/car-model-generations';
-    private const string ROLE = 'ROLE_CAR_MODEL_GENERATION_INDEX';
+    private const string ROLE = 'ROLE_REFERENCE_CAR_INDEX';
 
-    /** Доступ по роли ROLE_CAR_MODEL_GENERATION_INDEX */
+    /** Доступ по роли ROLE_REFERENCE_CAR_INDEX */
     public function testRoleSuccessful(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $usr = TestUserAccount::getModer(self::ROLE);
 
@@ -55,7 +52,7 @@ final class CarModelGenerationIndexAdminControllerTest extends WebTestCase
     /** Доступ по роли ROLE_ADMIN */
     public function testRoleAdminSuccessful(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $usr = TestUserAccount::getAdmin();
 
@@ -68,7 +65,7 @@ final class CarModelGenerationIndexAdminControllerTest extends WebTestCase
     /** Доступ по роли ROLE_USER */
     public function testRoleUserFiled(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $usr = TestUserAccount::getUsr();
         $client->loginUser($usr, 'user');
@@ -81,7 +78,7 @@ final class CarModelGenerationIndexAdminControllerTest extends WebTestCase
     public function testGuestFiled(): void
     {
         self::ensureKernelShutdown();
-        $client = static::createClient();
+        $client = self::createClient();
         $client->request('GET', self::URL);
 
         // Full authentication is required to access this resource

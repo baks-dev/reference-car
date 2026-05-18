@@ -21,11 +21,12 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModel;
 
 use BaksDev\Core\Entity\AbstractHandler;
 use BaksDev\Reference\Car\Entity\CarModel\CarModel;
-use BaksDev\Reference\Car\Messenger\Upload\CarModel\CarModelMessage;
 
 final class CarModelHandler extends AbstractHandler
 {
@@ -35,19 +36,17 @@ final class CarModelHandler extends AbstractHandler
 
         $carModel = $this->prePersistOrUpdate(CarModel::class, ['id' => $command->getId()]);
 
+
         /** Валидация всех объектов */
         if($this->validatorCollection->isInvalid())
         {
             return $this->validatorCollection->getErrorUniqid();
         }
 
+
         $this->flush();
 
-        $this->messageDispatch->dispatch(
-            message: new CarModelMessage($command->getId()),
-            transport: 'reference-car',
-        );
-
+        $this->messageDispatch->addClearCacheOther('reference-car');
 
         return $carModel;
     }

@@ -1,0 +1,21 @@
+<a
+        href="{{ path('reference-car:public.car-model.show', {
+            'brandName': item.brandUrl,
+            'modelName': item.url
+        }) }}"
+        class="card rounded-4 border-0 mb-3">
+    <div
+        class="overflow-hidden rounded-4 border border-primary border p-2 d-flex justify-content-center align-items-center"
+        style="height: 100px;"
+    >
+        <div title="{{ item.name }}">
+            <div class="card-body px-3 py-2">
+                <h2 class="card-title mb-2 h5 w-100 ">
+                    <div class="d-inline-block text-decoration-none text-dark text-truncate" style="max-width: 180px;">
+                        {{ item.name }}
+                    </div>
+                </h2>
+            </div>
+        </div>
+    </div>
+</a>

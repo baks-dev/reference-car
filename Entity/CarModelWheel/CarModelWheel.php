@@ -1,5 +1,4 @@
 <?php
-
 /*
  *  Copyright 2025.  Baks.dev <admin@baks.dev>
  *
@@ -138,9 +137,10 @@ class CarModelWheel extends EntityState
         return $this->diameter;
     }
 
-    public function setDiameter(CarModelWheelDiameter $diameter): void
+    public function setDiameter(CarModelWheelDiameter $diameter): self
     {
         $this->diameter = $diameter;
+        return $this;
     }
 
     public function getProfile(): CarModelWheelProfile
@@ -148,9 +148,10 @@ class CarModelWheel extends EntityState
         return $this->profile;
     }
 
-    public function setProfile(CarModelWheelProfile $profile): void
+    public function setProfile(CarModelWheelProfile $profile): self
     {
         $this->profile = $profile;
+        return $this;
     }
 
     public function getWidth(): CarModelWheelWidth
@@ -158,34 +159,40 @@ class CarModelWheel extends EntityState
         return $this->width;
     }
 
-    public function setWidth(CarModelWheelWidth $width): void
+    public function setWidth(CarModelWheelWidth $width): self
     {
         $this->width = $width;
+        return $this;
     }
 
-    public function setBackspacing(CarModelWheelBackspacing $backspacing): void
+    public function setBackspacing(CarModelWheelBackspacing $backspacing): self
     {
         $this->backspacing = $backspacing;
+        return $this;
     }
 
-    public function setBar(CarModelWheelBar $bar): void
+    public function setBar(CarModelWheelBar $bar): self
     {
         $this->bar = $bar;
+        return $this;
     }
 
-    public function setRange(CarModelWheelOffsetRange $range): void
+    public function setRange(CarModelWheelOffsetRange $range): self
     {
         $this->range = $range;
+        return $this;
     }
 
-    public function setRim(CarModelWheelRim $rim): void
+    public function setRim(CarModelWheelRim $rim): self
     {
         $this->rim = $rim;
+        return $this;
     }
 
-    public function setWeight(CarModelWheelTireWeight $weight): void
+    public function setWeight(CarModelWheelTireWeight $weight): self
     {
         $this->weight = $weight;
+        return $this;
     }
 
     public function getPetrol(): CarModelPetrolUid
@@ -193,8 +200,9 @@ class CarModelWheel extends EntityState
         return $this->petrol;
     }
 
-    public function setPetrol(CarModelPetrolUid $petrol): void
+    public function setPetrol(CarModelPetrolUid $petrol): self
     {
         $this->petrol = $petrol;
+        return $this;
     }
 }

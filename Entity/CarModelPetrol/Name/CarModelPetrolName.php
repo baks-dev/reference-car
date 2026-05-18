@@ -1,5 +1,4 @@
 <?php
-
 /*
  *  Copyright 2025.  Baks.dev <admin@baks.dev>
  *
@@ -22,20 +21,25 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarModelPetrol\Name;
 
 use BaksDev\Core\Entity\EntityState;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\CarModelPetrol;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Name\CarModelPetrolName as NameField;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
-
-/* CarModelPetrolName */
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'car_model_petrol_name')]
 class CarModelPetrolName extends EntityState
 {
+    /**
+     * Идентификатор комплектации
+     */
     #[Assert\NotBlank]
     #[Assert\Uuid]
     #[ORM\Id]
@@ -43,8 +47,16 @@ class CarModelPetrolName extends EntityState
     #[ORM\JoinColumn(name: 'petrol', referencedColumnName: 'id')]
     private CarModelPetrol $petrol;
 
+
+    /** Название комплектации */
     #[ORM\Column(name: 'value', type: NameField::TYPE, nullable: false)]
     private NameField $value;
+
+
+    /** URL комплектации */
+    #[ORM\Column(name: 'url', type: Types::STRING, nullable: false)]
+    private string $url;
+
 
     public function __construct(CarModelPetrol $petrol)
     {

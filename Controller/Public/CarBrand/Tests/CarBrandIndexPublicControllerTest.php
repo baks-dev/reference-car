@@ -21,17 +21,19 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Controller\Public\CarBrand\Tests;
 
 use App\Kernel;
 use BaksDev\Users\User\Tests\TestUserAccount;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- */
 #[When(env: 'test')]
+#[Group('reference-car')]
+#[Group('reference-car-controller')]
 final class CarBrandIndexPublicControllerTest extends WebTestCase
 {
     private const string URL = '/auto';

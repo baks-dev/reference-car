@@ -21,29 +21,42 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Repository\AllCarModelGenerations;
 
 use BaksDev\Core\Doctrine\DBALQueryBuilder;
+use BaksDev\Core\Form\Search\SearchDTO;
 use BaksDev\Core\Services\Paginator\PaginatorInterface;
+use BaksDev\Reference\Car\Entity\CarBrand\CarBrand;
+use BaksDev\Reference\Car\Entity\CarBrand\Name\CarBrandName;
 use BaksDev\Reference\Car\Entity\CarModel\CarModel;
 use BaksDev\Reference\Car\Entity\CarModel\Name\CarModelName;
 use BaksDev\Reference\Car\Entity\CarModelGeneration\CarModelGeneration;
+use BaksDev\Reference\Car\Entity\CarModelGeneration\Image\CarModelGenerationImage;
 use BaksDev\Reference\Car\Entity\CarModelGeneration\Name\CarModelGenerationName;
-
 
 final class AllCarModelGenerationsRepository implements AllCarModelGenerationsInterface
 {
+    private ?SearchDTO $search = null;
 
     public function __construct(
         private readonly DBALQueryBuilder $DBALQueryBuilder,
         private readonly PaginatorInterface $paginator
     ) {}
 
+    public function search(SearchDTO $search): self
+    {
+        $this->search = $search;
+        return $this;
+    }
+
     public function findAll(): PaginatorInterface
     {
         $dbal = $this->DBALQueryBuilder
             ->createQueryBuilder(self::class)
             ->bindLocal();
+
 
         /**
          * Получаем id поколения
@@ -54,17 +67,41 @@ final class AllCarModelGenerationsRepository implements AllCarModelGenerationsIn
                 CarModelGeneration::class,
                 'generation');
 
+
         /**
          * Получаем имя поколения
          */
         $dbal
             ->addSelect('generation_name.value as name')
+            ->addSelect('generation_name.url as url')
             ->leftJoin(
                 'generation',
                 CarModelGenerationName::class,
                 'generation_name',
                 'generation_name.generation = generation.id',
             );
+
+
+        /**
+         * Получаем изображение поколения
+         */
+        $dbal
+            ->addSelect('image.ext as image_ext')
+            ->addSelect('image.cdn as image_cdn')
+            ->addSelect("
+			    CASE
+			       WHEN image.name IS NOT NULL 
+			       THEN CONCAT ('/upload/".$dbal->table(CarModelGenerationImage::class)."' , '/', image.name)
+			       ELSE NULL
+			    END AS image_name
+		    ")
+            ->leftJoin(
+                'generation',
+                CarModelGenerationImage::class,
+                'image',
+                'image.generation = generation.id'
+            );
+
 
         /**
          * Получаем id модели
@@ -78,11 +115,13 @@ final class AllCarModelGenerationsRepository implements AllCarModelGenerationsIn
                 'model.id = generation.model',
             );
 
+
         /**
          * Получаем название модели
          */
         $dbal
             ->addSelect('model_name.value as model_name')
+            ->addSelect('model_name.url as model_url')
             ->leftJoin(
                 'model',
                 CarModelName::class,
@@ -90,7 +129,40 @@ final class AllCarModelGenerationsRepository implements AllCarModelGenerationsIn
                 'model_name.model = model.id',
             );
 
-        $dbal->orderBy('model_name.value')->addOrderBy('generation_name.value');
+
+        /**
+         * Получаем id бренда
+         */
+        $dbal->join('model', CarBrand::class, 'brand', 'brand.id = model.brand');
+
+
+        /**
+         * Получаем название и url бренда
+         */
+        $dbal
+            ->addSelect('brand_name.value as brand_name')
+            ->addSelect('brand_name.url as brand_url')
+            ->join(
+                'brand',
+                CarBrandName::class,
+                'brand_name',
+                'brand_name.brand = brand.id',
+            );
+
+
+        /* Поиск */
+        if($this->search?->getQuery())
+        {
+            $dbal
+                ->createSearchQueryBuilder($this->search)
+                ->addSearchLike('generation_name.value');
+        }
+
+
+        $dbal
+            ->addOrderBy('brand_name.value')
+            ->addOrderBy('model_name.value')
+            ->addOrderBy('generation_name.value');
 
         return $this->paginator->fetchAllHydrate($dbal, AllCarModelGenerationsResult::class);
     }

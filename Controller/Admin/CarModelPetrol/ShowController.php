@@ -37,20 +37,16 @@ use Symfony\Component\Routing\Attribute\Route;
 #[RoleSecurity(['ROLE_CAR_MODEL_PETROL', 'ROLE_CAR_MODEL_PETROL_SHOW'])]
 final class ShowController extends AbstractController
 {
-    #[Route('/admin/car-model-petrol/{id}', name: 'car-models-petrols.admin.show', methods: ['GET'])]
+    #[Route('/admin/car-model-petrol/{id}', name: 'admin.car-models-petrols.show', methods: ['GET'])]
     public function show(
         #[ParamConverter(CarModelPetrolUid::class)] CarModelPetrolUid $id,
         CarModelPetrolByIdInterface $carModelPetrolById,
         CarModelWheelsByModelPetrolIdInterface $carModelWheelsByModelPetrolId,
     ): Response
     {
-        $carModelPetrol = $carModelPetrolById
-            ->forModelPetrol($id)
-            ->find();
+        $carModelPetrol = $carModelPetrolById->find($id);
 
-        $carModelWheels = $carModelWheelsByModelPetrolId
-            ->forModelPetrol($id)
-            ->findAll();
+        $carModelWheels = $carModelWheelsByModelPetrolId->findAll($id);
 
         return $this->render([
             'carModelPetrol' => $carModelPetrol,

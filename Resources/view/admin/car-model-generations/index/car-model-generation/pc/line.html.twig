@@ -1,0 +1,50 @@
+{# @var item \BaksDev\Reference\Car\Repository\AllCarModelGenerations\AllCarModelGenerationsResult #}
+
+
+{# Обложка  #}
+{% set image_path = '/assets/'~version~'/img/blank.svg' %}
+
+{% if item.imageExt is defined and item.imageExt is not null %}
+    {% set img_host =  item.imageCdn == true  ? CDN_HOST : '' %}
+    {% set img_dir = item.imageName %}
+    {% set img_file = (img_host is empty ? '/image.' : '/small.') ~ item.imageExt %}
+    {% set image_path = img_host ~ img_dir ~ img_file %}
+{% endif %}
+
+
+<tr class="vertical-middle" id="{{ item.id }}">
+
+    <td class="text-nowrap">
+        {# Пользовательское меню #}
+        {{ include(_self|replace({ "line.html.twig": "_usecase.html.twig" })) }}
+    </td>
+
+    <td class="text-center">{{ item.name }}</td>
+
+    <td>
+        <div class="img mx-auto" style="width: 150px">
+            <img
+                    src="{{ image_path }}"
+                    alt=""
+                    style="width: 100%; height: 100%; object-fit: contain"
+            >
+        </div>
+    </td>
+
+    <td>{{ item.modelName }}</td>
+
+    <td>{{ item.brandName }}</td>
+
+    <td class="text-center">
+        <a
+            href='{{ path(
+                'reference-car:public.car-generation.show',
+                { brandName: item.brandUrl, modelName: item.modelUrl, generationName: item.url }
+            ) }}'
+            class="badge text-bg-light text-decoration-none"
+        >
+            Перейти
+        </a>
+    </td>
+
+</tr>

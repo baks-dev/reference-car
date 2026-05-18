@@ -1,0 +1,23 @@
+{# @var item \BaksDev\Reference\Car\Repository\AllCarModels\AllCarModelsResult #}
+
+<tr class="vertical-middle" id="{{ item.id }}">
+
+    <td class="text-nowrap py-3"></td>
+
+    <td>{{ item.name }}</td>
+
+    <td>{{ item.brandName }}</td>
+
+    <td class="text-center">
+        <a
+                href='{{ path(
+                    'reference-car:public.car-model.show',
+                    { brandName: item.brandUrl, modelName: item.url }
+                ) }}'
+                class="badge text-bg-light text-decoration-none"
+        >
+            Перейти
+        </a>
+    </td>
+
+</tr>

@@ -16,6 +16,8 @@
  *
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Type\CarModels\Id;
 
 use BaksDev\Core\Type\UidType\UidType;

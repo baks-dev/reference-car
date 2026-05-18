@@ -16,6 +16,8 @@
  *
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Repository\CarBrandById;
 
 use BaksDev\Reference\Car\Entity\CarBrand\CarBrand;

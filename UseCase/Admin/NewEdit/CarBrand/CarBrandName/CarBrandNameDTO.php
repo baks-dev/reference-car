@@ -21,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\CarBrandName;
 
 use BaksDev\Reference\Car\Entity\CarBrand\Name\CarBrandNameInterface;
@@ -32,7 +34,10 @@ final class CarBrandNameDTO implements CarBrandNameInterface
     #[Assert\NotBlank]
     private ?NameField $value = null;
 
-    public function getValue(): NameField
+    #[Assert\NotBlank]
+    private ?string $url = null;
+
+    public function getValue(): ?NameField
     {
         return $this->value;
     }
@@ -41,5 +46,16 @@ final class CarBrandNameDTO implements CarBrandNameInterface
     {
         $this->value = $value;
         return $this;
+    }
+
+    public function setUrl(?string $url): self
+    {
+        $this->url = $url;
+        return $this;
+    }
+
+    public function getUrl(): ?string
+    {
+        return $this->url;
     }
 }

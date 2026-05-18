@@ -28,8 +28,7 @@ namespace BaksDev\Reference\Car\Command\Upload;
 use BaksDev\Core\Command\Update\ProjectUpgradeInterface;
 use BaksDev\Reference\Car\Entity\CarModel\CarModel;
 use BaksDev\Reference\Car\Repository\ExistCarModel\ExistCarModelInterface;
-use BaksDev\Reference\Car\Type\CarModels\Id\Models\CarModelsInterface;
-use BaksDev\Reference\Car\Type\CarModels\Name\Models\CarModelsNameInterface;
+use BaksDev\Reference\Car\Type\CarModels\Models\CarModelsInterface;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModel\CarModelDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModel\CarModelHandler;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -40,41 +39,38 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
-#[AsCommand(
-    name: 'baks:car:models-load',
-    description: 'Загружает модели автомобилей из классов в базу данных',
-)]
+#[AsCommand(name: 'baks:car:models-load', description: 'Загружает модели автомобилей из классов в базу данных')]
 #[AutoconfigureTag('baks.project.upgrade')]
 class RunUploadModelsCommand extends Command implements ProjectUpgradeInterface
 {
     public function __construct(
         private readonly CarModelHandler $carModelHandler,
         private readonly ExistCarModelInterface $ExistCarModelRepository,
-
         #[AutowireIterator('baks.car.models')] private readonly iterable $carModels,
-        #[AutowireIterator('baks.car.models.name')] private readonly iterable $carModelsName
     )
     {
         parent::__construct();
     }
 
-    /** Чем выше число - тем первым в итерации будет значение */
+
+    /** Чем выше число - тем первее в итерации будет значение */
     public static function priority(): int
     {
         return 100;
     }
+
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
         $io->text("Загрузка моделей автомобилей");
 
+
         /**
          * Счетчик загруженных элементов для вывода статистики
          */
         $count = 0;
 
-        $carModelsName = iterator_to_array($this->carModelsName);
 
         /** @var CarModelsInterface $carModel */
         foreach($this->carModels as $carModel)
@@ -87,25 +83,25 @@ class RunUploadModelsCommand extends Command implements ProjectUpgradeInterface
                 continue;
             }
 
+
             $carModelDTO = new CarModelDTO();
             $carModelDTO->setId($carModel::getUid());
             $carModelDTO->setBrand($carModel->getBrandUid());
 
-            /** @var CarModelsNameInterface $carModelsName */
+            $CarModelNameDTO = $carModelDTO->getName();
+            $CarModelNameDTO
+                ->setValue($carModel::getValue())
+                ->setUrl(strtr(strtolower(
+                    (string)$carModel::getValue()),
+                    ['(' => '', ')' => '', ' ' => '-', '/' => '-']
+                ));
 
-            foreach($carModelsName as $carModelName)
-            {
-                if(true === $carModelName::equals($carModel::getUid()))
-                {
-                    $CarModelNameDTO = $carModelDTO->getName();
-                    $CarModelNameDTO->setValue($carModelName::getValue());
-                }
-            }
 
             /**
              * Создаем новую модель
              */
             $carModel = $this->carModelHandler->handle($carModelDTO);
+
 
             /**
              * Выдаем сообщение в консоль об успехе загрузки бренда
@@ -117,7 +113,7 @@ class RunUploadModelsCommand extends Command implements ProjectUpgradeInterface
             }
         }
 
-        $io->text("Загружено моделей: {$count}");
+        $io->text("Загружено моделей: ".$count);
         $io->text("Загрузка завершена");
         return Command::SUCCESS;
     }

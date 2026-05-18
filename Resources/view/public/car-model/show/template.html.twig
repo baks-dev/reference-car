@@ -1,0 +1,15 @@
+{% trans_default_domain('reference-car.public') %}
+
+{# ---- CSS ------------------------------------------------------------ #}
+{% block title %}
+    {{ 'page.index'|trans }}
+{% endblock %}
+
+{# ---- ШАБЛОН ------------------------------------------------------------ #}
+{% extends '@reference-car/public/base.html.twig' %}
+
+
+{# ---- КОНТЕНТ-БЛОК ------------------------------------------------------------ #}
+{% block content %}
+    {{ include(_self|replace({ "template.html.twig": "car-model/"~baks_settings.device~"/content.html.twig" })) }}
+{% endblock %}

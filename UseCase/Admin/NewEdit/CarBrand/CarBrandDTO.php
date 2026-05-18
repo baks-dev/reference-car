@@ -21,11 +21,14 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand;
 
 use BaksDev\Reference\Car\Entity\CarBrand\CarBrandInterface;
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\CarBrandName\CarBrandNameDTO;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\Image\CarBrandImageDTO;
 use Symfony\Component\Validator\Constraints as Assert;
 
 final class CarBrandDTO implements CarBrandInterface
@@ -37,9 +40,16 @@ final class CarBrandDTO implements CarBrandInterface
     #[Assert\Valid]
     private CarBrandNameDTO $name;
 
+
+    /** Обложка бренда */
+    public ?CarBrandImageDTO $image = null;
+
+
     public function __construct()
     {
+        $this->id = new CarBrandUid();
         $this->name = new CarBrandNameDTO();
+        $this->image = new CarBrandImageDTO();
     }
 
     public function getId(): CarBrandUid
@@ -47,9 +57,10 @@ final class CarBrandDTO implements CarBrandInterface
         return $this->id;
     }
 
-    public function setId(CarBrandUid $id): void
+    public function setId(CarBrandUid $id): self
     {
         $this->id = $id;
+        return $this;
     }
 
     public function getName(): CarBrandNameDTO
@@ -57,4 +68,17 @@ final class CarBrandDTO implements CarBrandInterface
         return $this->name;
     }
 
+
+    /** Обложка бренда */
+
+    public function getImage(): ?CarBrandImageDTO
+    {
+        return $this->image;
+    }
+
+    public function setImage(?CarBrandImageDTO $image): self
+    {
+        $this->image = $image;
+        return $this;
+    }
 }

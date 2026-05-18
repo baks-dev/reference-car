@@ -16,11 +16,16 @@
  *
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Repository\AllCarModels;
 
+use BaksDev\Core\Form\Search\SearchDTO;
 use BaksDev\Core\Services\Paginator\PaginatorInterface;
 
 interface AllCarModelsInterface
 {
+    public function search(SearchDTO $search): self;
+
     public function findAll(): PaginatorInterface;
 }

@@ -1,5 +1,4 @@
 <?php
-
 /*
  *  Copyright 2025.  Baks.dev <admin@baks.dev>
  *
@@ -22,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarModelWheel\Backspacing;
 
 use BaksDev\Core\Entity\EntityState;
@@ -29,8 +30,7 @@ use BaksDev\Reference\Car\Entity\CarModelWheel\CarModelWheel;
 use BaksDev\Reference\Car\Type\CarModelWheels\Backspacing\CarModelWheelBackspacing as BackspacingField;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
-
-/* CarModelWheelBackspacing */
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'car_model_wheel_backspacing')]

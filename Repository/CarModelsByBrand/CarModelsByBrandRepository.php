@@ -1,4 +1,25 @@
 <?php
+/*
+ * Copyright 2026.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 
 declare(strict_types=1);
 
@@ -11,49 +32,21 @@ use BaksDev\Reference\Car\Entity\CarBrand\Name\CarBrandName;
 use BaksDev\Reference\Car\Entity\CarModel\CarModel;
 use BaksDev\Reference\Car\Entity\CarModel\Name\CarModelName;
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
-use InvalidArgumentException;
+use Generator;
 
-final class CarModelsByBrandRepository implements CarModelsByBrandIdInterface
+final readonly class CarModelsByBrandRepository implements CarModelsByBrandInterface
 {
-    private CarBrandUid|false $brand = false;
+    public function __construct(private DBALQueryBuilder $DBALQueryBuilder) {}
 
-    public function __construct(
-        private DBALQueryBuilder $DBALQueryBuilder,
-        private readonly PaginatorInterface $paginator,
-    ) {}
-
-    /**
-     * Передаем в метод uid или сущность для дальнейшей передачи в запрос
-     *
-     * @param CarBrandUid|CarBrand $brand
-     *
-     * @return $this
-     */
-    public function forBrand(CarBrandUid|CarBrand $brand): self
-    {
-        if($brand instanceof CarBrand)
-        {
-            $brand = $brand->getId();
-        }
-
-        $this->brand = $brand;
-
-        return $this;
-    }
 
     /**
      * Метод возвращает все модели принадлежащие бренду
-     *
-     * @return PaginatorInterface
+     * @return Generator<CarModelsByBrandResult>
      */
-    public function findAll(): PaginatorInterface
+    public function findAll(CarBrandUid $brand): Generator
     {
         $dbal = $this->DBALQueryBuilder->createQueryBuilder(self::class);
 
-        if(false === ($this->brand instanceof CarBrandUid))
-        {
-            throw new InvalidArgumentException('Invalid Argument CarBrand');
-        }
 
         /**
          * Получаем id модели
@@ -62,44 +55,49 @@ final class CarModelsByBrandRepository implements CarModelsByBrandIdInterface
             ->select('model.id')
             ->from(CarModel::class, 'model')
             ->where('model.brand = :brand')
-            ->setParameter('brand', $this->brand, CarBrandUid::TYPE);
+            ->setParameter('brand', $brand, CarBrandUid::TYPE);
+
 
         /**
          * Получаем название модели
          */
         $dbal
             ->addSelect('name.value as name')
-            ->leftJoin(
-                'model',
-                CarModelName::class,
-                'name',
-                'name.model = model.id',
-            );
+            ->addSelect('name.url')
+            ->join('model', CarModelName::class, 'name', 'name.model = model.id');
+
 
         /**
          * Получаем id бренда
          */
         $dbal
-            ->addSelect('carBrand.id as brand_id')
-            ->leftJoin(
+            ->addSelect('car_brand.id as brand_id')
+            ->join(
                 'model',
                 CarBrand::class,
-                'carBrand',
-                'carBrand.id = model.brand',
+                'car_brand',
+                'car_brand.id = model.brand',
             );
+
 
         /**
          * Получаем название бренда
          */
         $dbal
-            ->addSelect('carBrandName.value as brand_name')
-            ->leftJoin(
-                'carBrand',
+            ->addSelect('car_brand_name.value as brand_name')
+            ->addSelect('car_brand_name.url as brand_url')
+            ->join(
+                'car_brand',
                 CarBrandName::class,
-                'carBrandName',
-                'carBrandName.brand = carBrand.id',
+                'car_brand_name',
+                'car_brand_name.brand = car_brand.id',
             );
 
-        return $this->paginator->fetchAllHydrate($dbal, CarModelsByBrandResult::class);
+
+        $dbal->orderBy('name.value');
+
+        return $dbal
+            ->enableCache('reference-car', 3600)
+            ->fetchAllHydrate(CarModelsByBrandResult::class);
     }
 }

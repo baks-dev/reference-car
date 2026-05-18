@@ -31,9 +31,6 @@ use BaksDev\Reference\Car\Repository\AllCarModels\AllCarModelsRepository;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- */
 #[When(env: 'test')]
 class AllCarModelsRepositoryTest extends KernelTestCase
 {

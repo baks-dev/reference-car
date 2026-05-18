@@ -1,12 +1,31 @@
 <?php
+/*
+ * Copyright 2026.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 
 declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Repository\CarModelWheelsByModelPetrolId;
 
 use BaksDev\Core\Doctrine\DBALQueryBuilder;
-use BaksDev\Core\Services\Paginator\PaginatorInterface;
-use BaksDev\Reference\Car\Entity\CarModelPetrol\CarModelPetrol;
 use BaksDev\Reference\Car\Entity\CarModelWheel\Backspacing\CarModelWheelBackspacing;
 use BaksDev\Reference\Car\Entity\CarModelWheel\Bar\CarModelWheelBar;
 use BaksDev\Reference\Car\Entity\CarModelWheel\CarModelWheel;
@@ -17,84 +36,59 @@ use BaksDev\Reference\Car\Entity\CarModelWheel\Rim\CarModelWheelRim;
 use BaksDev\Reference\Car\Entity\CarModelWheel\TireWeight\CarModelWheelTireWeight;
 use BaksDev\Reference\Car\Entity\CarModelWheel\Width\CarModelWheelWidth;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
-use InvalidArgumentException;
+use Generator;
 
-final class CarModelWheelsByModelPetrolIdRepository implements CarModelWheelsByModelPetrolIdInterface
+final readonly class CarModelWheelsByModelPetrolIdRepository implements CarModelWheelsByModelPetrolIdInterface
 {
-    private CarModelPetrolUid|false $modelPetrol = false;
+    public function __construct(private DBALQueryBuilder $DBALQueryBuilder) {}
 
-    public function __construct(
-        private DBALQueryBuilder $DBALQueryBuilder,
-        private readonly PaginatorInterface $paginator,
-    ) {}
-
-    /**
-     * Передаем в метод uid или сущность для дальнейшей передачи в запрос
-     *
-     * @param CarModelPetrolUid|CarModelPetrol $modelPetrol
-     *
-     * @return $this
-     */
-    public function forModelPetrol(CarModelPetrolUid|CarModelPetrol $modelPetrol): self
-    {
-        if($modelPetrol instanceof CarModelPetrol)
-        {
-            $modelPetrol = $modelPetrol->getId();
-        }
-
-        $this->modelPetrol = $modelPetrol;
-
-        return $this;
-    }
 
     /**
      * Метод возвращает все комплектации принадлежащие модели
-     *
-     * @return PaginatorInterface
+     * @return Generator<CarModelWheelsByModelPetrolIdResult>
      */
-    public function findAll(): PaginatorInterface
+    public function findAll(CarModelPetrolUid $petrol): Generator
     {
-        if(false === ($this->modelPetrol instanceof CarModelPetrolUid))
-        {
-            throw new InvalidArgumentException('Invalid Argument CarModelPetrol');
-        }
-
         $dbal = $this->DBALQueryBuilder->createQueryBuilder(self::class);
+
 
         /**
          * Получаем id колеса
          */
         $dbal
-            ->select('car_model_wheel_table.id')
-            ->from(CarModelWheel::class, 'car_model_wheel_table')
-            ->where('car_model_wheel_table.petrol = :modelPetrol')
-            ->setParameter('modelPetrol', $this->modelPetrol, CarModelPetrolUid::TYPE);
+            ->select('wheel.id')
+            ->from(CarModelWheel::class, 'wheel')
+            ->where('wheel.petrol = :petrol')
+            ->setParameter('petrol', $petrol, CarModelPetrolUid::TYPE);
+
 
         /**
          * Получаем диаметр колеса
          */
         $dbal
-            ->addSelect('car_model_wheel_diameter_table.value as wheel_diameter')
-            ->leftJoin(
-                'car_model_wheel_table',
+            ->addSelect('diameter.value as diameter')
+            ->join(
+                'wheel',
                 CarModelWheelDiameter::class,
-                'car_model_wheel_diameter_table',
-                'car_model_wheel_table.id = car_model_wheel_diameter_table.wheel',
+                'diameter',
+                'wheel.id = diameter.wheel',
             );
 
+
         /**
-         * Получаем  профиль колеса
+         * Получаем профиль колеса
          *
          * Wheel Profile
          */
         $dbal
-            ->addSelect('car_model_wheel_profile_table.value as wheel_profile')
-            ->leftJoin(
-                'car_model_wheel_table',
+            ->addSelect('profile.value as profile')
+            ->join(
+                'wheel',
                 CarModelWheelProfile::class,
-                'car_model_wheel_profile_table',
-                'car_model_wheel_table.id = car_model_wheel_profile_table.wheel',
+                'profile',
+                'wheel.id = profile.wheel',
             );
+
 
         /**
          * Получаем ширину колеса
@@ -102,13 +96,14 @@ final class CarModelWheelsByModelPetrolIdRepository implements CarModelWheelsByM
          * Wheel width
          */
         $dbal
-            ->addSelect('car_model_wheel_width_table.value as wheel_width')
-            ->leftJoin(
-                'car_model_wheel_table',
+            ->addSelect('width.value as width')
+            ->join(
+                'wheel',
                 CarModelWheelWidth::class,
-                'car_model_wheel_width_table',
-                'car_model_wheel_table.id = car_model_wheel_width_table.wheel',
+                'width',
+                'wheel.id = width.wheel',
             );
+
 
         /**
          * Получаем обод колеса
@@ -116,13 +111,14 @@ final class CarModelWheelsByModelPetrolIdRepository implements CarModelWheelsByM
          * Wheel rim
          */
         $dbal
-            ->addSelect('car_model_wheel_rim_table.value as wheel_rim')
-            ->leftJoin(
-                'car_model_wheel_table',
+            ->addSelect('rim.value as rim')
+            ->join(
+                'wheel',
                 CarModelWheelRim::class,
-                'car_model_wheel_rim_table',
-                'car_model_wheel_table.id = car_model_wheel_rim_table.wheel',
+                'rim',
+                'wheel.id = rim.wheel',
             );
+
 
         /**
          * Получаем Диапазон смещения
@@ -130,13 +126,14 @@ final class CarModelWheelsByModelPetrolIdRepository implements CarModelWheelsByM
          * Wheel offset range
          */
         $dbal
-            ->addSelect('car_model_wheel_offset_range_table.value as wheel_offset_range')
-            ->leftJoin(
-                'car_model_wheel_table',
+            ->addSelect('car_model_wheel_offset_range_table.value as offset_range')
+            ->join(
+                'wheel',
                 CarModelWheelOffsetRange::class,
                 'car_model_wheel_offset_range_table',
-                'car_model_wheel_table.id = car_model_wheel_offset_range_table.wheel',
+                'wheel.id = car_model_wheel_offset_range_table.wheel',
             );
+
 
         /**
          * Получаем давление
@@ -144,13 +141,14 @@ final class CarModelWheelsByModelPetrolIdRepository implements CarModelWheelsByM
          * Wheel bar
          */
         $dbal
-            ->addSelect('car_model_wheel_bar_table.value as wheel_bar')
-            ->leftJoin(
-                'car_model_wheel_table',
+            ->addSelect('car_model_wheel_bar_table.value as bar')
+            ->join(
+                'wheel',
                 CarModelWheelBar::class,
                 'car_model_wheel_bar_table',
-                'car_model_wheel_table.id = car_model_wheel_bar_table.wheel',
+                'wheel.id = car_model_wheel_bar_table.wheel',
             );
+
 
         /**
          * Получаем вес
@@ -158,13 +156,14 @@ final class CarModelWheelsByModelPetrolIdRepository implements CarModelWheelsByM
          * Wheel tire weight
          */
         $dbal
-            ->addSelect('car_model_wheel_tire_weight_table.value as wheel_tire_weight')
-            ->leftJoin(
-                'car_model_wheel_table',
+            ->addSelect('car_model_wheel_tire_weight_table.value as tire_weight')
+            ->join(
+                'wheel',
                 CarModelWheelTireWeight::class,
                 'car_model_wheel_tire_weight_table',
-                'car_model_wheel_table.id = car_model_wheel_tire_weight_table.wheel',
+                'wheel.id = car_model_wheel_tire_weight_table.wheel',
             );
+
 
         /**
          * Получаем Возврат
@@ -172,14 +171,15 @@ final class CarModelWheelsByModelPetrolIdRepository implements CarModelWheelsByM
          * Wheel backspacing
          */
         $dbal
-            ->addSelect('car_model_wheel_backspacing_table.value as wheel_backspacing')
-            ->leftJoin(
-                'car_model_wheel_table',
+            ->addSelect('car_model_wheel_backspacing_table.value as backspacing')
+            ->join(
+                'wheel',
                 CarModelWheelBackspacing::class,
                 'car_model_wheel_backspacing_table',
-                'car_model_wheel_table.id = car_model_wheel_backspacing_table.wheel',
+                'wheel.id = car_model_wheel_backspacing_table.wheel',
             );
 
-        return $this->paginator->fetchAllAssociative($dbal);
+
+        return $dbal->fetchAllHydrate(CarModelWheelsByModelPetrolIdResult::class);
     }
 }
