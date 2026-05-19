@@ -30,11 +30,13 @@ use BaksDev\Reference\Car\Command\Parser\RunParserWheelSizeCommand;
 use BaksDev\Reference\Car\Messenger\WheelSize\WheelSize;
 use DateInterval;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Facebook\WebDriver\Exception\TimeoutException;
 
+#[Autoconfigure(shared: false)]
 final class ParserCarModelRequest extends WheelSize
 {
     /* Задержка между запросами в секундах */

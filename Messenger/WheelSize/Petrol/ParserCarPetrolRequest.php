@@ -29,18 +29,21 @@ use BaksDev\Reference\Car\Command\Parser\RunParserWheelSizeCommand;
 use BaksDev\Reference\Car\Messenger\WheelSize\WheelSize;
 use DateInterval;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
+#[Autoconfigure(shared: false)]
 final class ParserCarPetrolRequest extends WheelSize
 {
     /* Задержка между запросами в секундах */
-    private const REQUEST_DELAY = 4;
+    private const int REQUEST_DELAY = 4;
+
 
     public function __construct(
-        #[Target('referenceCarLogger')] private LoggerInterface $logger,
-        private CacheInterface $cache,
+        #[Target('referenceCarLogger')] private readonly LoggerInterface $logger,
+        private readonly CacheInterface $cache,
     ) {}
 
     /**
@@ -55,7 +58,7 @@ final class ParserCarPetrolRequest extends WheelSize
         $cacheKey = md5('parser_request_'.$url);
         $url = str_starts_with($url, 'http') ? $url : RunParserWheelSizeCommand::WHEEL_SIZE_URL.$url;
 
-$this->cache->delete($cacheKey);
+
         /**
          * Получает HTML из кеша,
          * либо получает html из запроса
@@ -77,22 +80,19 @@ $this->cache->delete($cacheKey);
 
             $content = $client->getPageSource();
 
-            if(isset($client))
-            {
-                echo 'Закрыли клиент для '.$url.PHP_EOL;
-                $client->quit();
-            }
+            echo 'Закрыли клиент для '.$url.PHP_EOL;
+            $client->quit();
 
-            if(empty($content)/* || $response->getStatusCode() !== 200*/)
+            if(empty($content) || $response->getStatusCode() !== 200)
             {
-                $this->logger->error('Ошибка запроса на '.$url.' статус ответа: '/*.$response->getStatusCode()*/);
+                $this->logger->error('Ошибка запроса на '.$url.' статус ответа: '.$response->getStatusCode());
 
                 return false;
             }
 
             $item->expiresAfter(DateInterval::createFromDateString('1 week'));
 
-            return $content ?: false;
+            return $content;
         });
 
         if(false === $html)
