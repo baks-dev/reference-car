@@ -25,56 +25,33 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Messenger\WheelSize\CarModel;
 
-use BaksDev\Reference\Car\Type\CarModels\Id\Models\CarModelsInterface;
+use BaksDev\Reference\Car\Type\CarBrands\CarBrand;
+use BaksDev\Reference\Car\Type\CarModels\Models\CarModelsInterface;
 
-final class ParserCarModelMessage
+final readonly class ParserCarModelMessage
 {
-
-    /** Url модели */
-    private string $url;
-
-    /** Дата модели */
-    private string $date;
-
-
-    /** Имя класса модели */
-    private string $className;
-
-    /** Имя модели */
-    private string $title;
-
-    /** Бренд модели */
-    private array $brand;
-
-
     public function __construct(
-        string $url,
-        string $date,
-        string $className,
-        string $title,
-        //        string $image,
-        array $brand
-    )
-    {
-        $this->url = (string) $url;
-        $this->date = (string) $date;
-        $this->className = (string) $className;
-        $this->title = (string) $title;
-        //        $this->image = (string) $image;
-        $this->brand = (array) $brand;
-    }
+        private string $url,
+        private string $className,
+        private string $title,
+        private CarBrand $brand,
+        private ?bool $isForced = false,
+    ) {}
+
 
     /** Url модели */
     public function getUrl(): string
     {
-        return (string) $this->url;
+        return $this->url;
     }
+
 
     /** Namespace класса модели */
     public function getNamespace(): string
     {
-        return CarModelsInterface::MODEL_NAMESPACE.'Collection\\'.$this->className;
+        return CarModelsInterface::MODEL_NAMESPACE.'Collection\\';
     }
+
 
     /** Имя класса модели */
     public function getClassName(): string
@@ -82,45 +59,23 @@ final class ParserCarModelMessage
         return $this->className;
     }
 
+
     /** Имя модели */
     public function getTitle(): string
     {
         return $this->title;
     }
 
-    //    public function getImage(): string
-    //    {
-    //        return $this->image;
-    //    }
 
     /** Бренд модели */
-    public function getBrand(): array
+    public function getBrand(): CarBrand
     {
         return $this->brand;
     }
 
-    /**
-     * Возвращает все поля сообщения в виде массива
-     *
-     * @return array{
-     *     url: string,
-     *     date: string,
-     *     class_name: string,
-     *     title: string,
-     * //     *     image: string,
-     *     brand: array
-     * }
-     */
 
-    public function getAll(): array
+    public function isForced(): bool
     {
-        return [
-            'href' => $this->url,
-            'date' => $this->date,
-            'class_name' => $this->className,
-            'title' => $this->title,
-            //            'image' => $this->image,
-            'brand' => $this->brand,
-        ];
+        return $this->isForced;
     }
 }

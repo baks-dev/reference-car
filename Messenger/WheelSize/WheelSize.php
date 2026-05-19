@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace BaksDev\Reference\Car\Messenger\WheelSize;
 
 use Symfony\Component\Panther\Client;
+use BaksDev\Core\Type\UserAgent\UserAgentGenerator;
 
 abstract class WheelSize
 {
@@ -42,10 +43,16 @@ abstract class WheelSize
      */
     public function createClient(): Client
     {
+        $UserAgentGenerator = new UserAgentGenerator();
+        $userAgent = $UserAgentGenerator->genDesktop();
+
         return Client::createChromeClient(null, [
             '--user-data-dir=/tmp/chrome-profile-'.uniqid(),
             '--headless',
             '--no-sandbox',
+            '--disable-gpu',
+            '--window-size=1200,1100',
+            sprintf('--user-agent=%s', $userAgent),
         ]);
     }
 }

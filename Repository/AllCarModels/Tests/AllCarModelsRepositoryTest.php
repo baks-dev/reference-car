@@ -26,26 +26,51 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Repository\AllCarModels\Tests;
 
-use BaksDev\Core\Services\Paginator\PaginatorInterface;
 use BaksDev\Reference\Car\Repository\AllCarModels\AllCarModelsRepository;
+use BaksDev\Reference\Car\Repository\AllCarModels\AllCarModelsResult;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModel\Tests\CarModelNewAdminUseCaseTest;
+use PHPUnit\Framework\Attributes\DependsOnClass;
+use PHPUnit\Framework\Attributes\Group;
+use ReflectionClass;
+use ReflectionMethod;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- */
 #[When(env: 'test')]
+#[Group('reference-car')]
+#[Group('reference-car-repository')]
 class AllCarModelsRepositoryTest extends KernelTestCase
 {
+    #[DependsOnClass(CarModelNewAdminUseCaseTest::class)]
     public function testAll()
     {
         /** @var AllCarModelsRepository $repository */
         $repository = self::getContainer()->get(AllCarModelsRepository::class);
 
-        $result = $repository
-            ->findAll();
+        $result = $repository->findAll();
 
-        self::assertInstanceOf(PaginatorInterface::class, $result);
+        foreach($result->getData() as $AllCarModelsResult)
+        {
+            self::assertInstanceOf(AllCarModelsResult::class, $AllCarModelsResult);
+
+
+            // Вызываем все геттеры
+            $reflectionClass = new ReflectionClass(AllCarModelsResult::class);
+            $methods = $reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC);
+
+            foreach($methods as $method)
+            {
+                // Методы без аргументов
+                if($method->getNumberOfParameters() === 0)
+                {
+                    // Вызываем метод
+                    $data = $method->invoke($AllCarModelsResult);
+                    // dump($data);
+                }
+            }
+
+            break;
+        }
     }
 
 }

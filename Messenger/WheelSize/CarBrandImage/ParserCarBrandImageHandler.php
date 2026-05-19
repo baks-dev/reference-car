@@ -25,102 +25,102 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Messenger\WheelSize\CarBrandImage;
 
-
+use BaksDev\Core\Deduplicator\Deduplicator;
+use BaksDev\Core\Deduplicator\DeduplicatorInterface;
 use BaksDev\Reference\Car\BaksDevReferenceCarBundle;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Target;
+use BaksDev\Reference\Car\Type\CarBrands\Brands\CarBrandsInterface;
+use DateInterval;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(priority: 0)]
-final class ParserCarBrandImageHandler
+#[Autoconfigure(shared: false)]
+final readonly class ParserCarBrandImageHandler
 {
-    private const NAMESPACE = [
-        "Type",
-        "CarBrands",
-        "Id",
-        "Brands",
-        "Collection",
-    ];
+    public function __construct(private DeduplicatorInterface $Deduplicator) {}
 
-    private string $brandFullNamespace;
-
-    public function __construct(
-        #[Target('referenceCarLogger')] private LoggerInterface $logger,
-    )
-    {
-        $this->brandFullNamespace = implode('\\', [
-            rtrim(BaksDevReferenceCarBundle::NAMESPACE, '\\'),
-            ...self::NAMESPACE]);
-    }
 
     /**
-     * Сохраняем картинку модели
-     *
-     * @param ParserCarBrandImageMessage $message
-     *
-     * @return void
+     * Сохраняем изображение бренда
      */
     public function __invoke(ParserCarBrandImageMessage $message): void
     {
+        if(false === $message->isForced())
+        {
+            /** Делаем проверку дедупликатором */
+            $Deduplicator = $this->Deduplicator
+                ->namespace('reference-car')
+                ->expiresAfter(DateInterval::createFromDateString('1 day'))
+                ->deduplication([$message->getClassName(), md5(self::class)]);
+
+            if($Deduplicator->isExecuted())
+            {
+                return;
+            }
+        }
+
         echo 'Скачиваем картинку бренда '.$message->getTitle().PHP_EOL;
 
         $carBrandImage = $message->getImageSrc();
 
-        if($carBrandImage !== null)
+
+        // Получаем класс модели и uid для создания имени картинки
+        $carBrandFullNamespace = $message->getNamespace().$message->getClassName();
+
+
+        /** @var CarBrandsInterface $carBrandFullNamespace */
+        $carBrandUid = $carBrandFullNamespace::getUid();
+
+
+        // путь для закачивания файла
+        $imagePath = implode(DIRECTORY_SEPARATOR, [
+            rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
+            'Resources',
+            'upload',
+            'car_brand_image',
+            $carBrandUid
+        ]);
+
+
+        // определяем расширение файла
+        $extension = pathinfo(parse_url($carBrandImage, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+
+
+        $filename = 'image.'.$extension;
+        $fullPath = $imagePath.'/'.$filename;
+
+
+        // Проверяем существует ли файл
+        if(file_exists($fullPath))
         {
-            // Получаем класс модели и uid для создания имени картинки
-            $carBrandFullNamespace = implode('\\', [
-                $this->brandFullNamespace,
-                $message->getClassName(),
-            ]);
+            echo 'Файл уже существует: '.$filename.PHP_EOL;
+            return;
+        }
 
-            $carBrandUid = $carBrandFullNamespace::getUid();
 
-            // путь для закачивания файла
-            $imagePath = implode(DIRECTORY_SEPARATOR, [
-                rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
-                'Resources',
-                'assets',
-                'reference-car',
-                'image',
-                'Brand',
-            ]);
+        // Создаем директорию, если ее нет
+        if(!file_exists($imagePath))
+        {
+            mkdir($imagePath, 0777, true);
+        }
 
-            //определяем расширение файла
-            $extension = pathinfo(parse_url($carBrandImage, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
 
-            $filename = $carBrandUid.'.'.$extension;
-            $fullPath = $imagePath.'/'.$filename;
+        $context = stream_context_create([
+            'http' => ['timeout' => 30, /* Таймаут 30 секунд */ ],
+            'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
+        ]);
 
-            // Проверяем существует ли файл
-            if(file_exists($fullPath))
-            {
-                echo 'Файл уже существует: '.$filename.PHP_EOL;
-                return;
-            }
+        $content = file_get_contents($carBrandImage, false, $context);
 
-            // Создаем директорию, если ее нет
-            if(!file_exists($imagePath))
-            {
-                mkdir($imagePath, 0777, true);
-            }
+        if($content !== false)
+        {
+            file_put_contents($fullPath, $content);
+        }
 
-            $context = stream_context_create([
-                'http' => [
-                    'timeout' => 30, // Таймаут 30 секунд
-                ],
-                'ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false,
-                ],
-            ]);
-
-            $content = file_get_contents($carBrandImage, false, $context);
-
-            if($content !== false)
-            {
-                file_put_contents($fullPath, $content);
-            }
+        if(false === $message->isForced())
+        {
+            /** @var Deduplicator $Deduplicator */
+            $Deduplicator->save();
         }
     }
 }

@@ -47,136 +47,115 @@ use BaksDev\Reference\Car\Type\CarModelWheels\Width\CarModelWheelWidth as CarMod
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelWheel\CarModelWheelDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelWheel\CarModelWheelHandler;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- * @group reference-car-usecase
- * @group reference-car-repository
- * @group reference-car-controller
- */
 #[When(env: 'test')]
-class CarModelWheelNewAdminUseCaseTest extends KernelTestCase
+#[Group('reference-car')]
+#[Group('reference-car-repository')]
+#[Group('reference-car-usecase')]
+final class CarModelWheelNewAdminUseCaseTest extends KernelTestCase
 {
     /**
      * Удаляем тестовые данные перед началом тестов
-     *
-     * @return void
      */
     public static function setUpBeforeClass(): void
     {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
+        /** @var EntityManagerInterface $EntityManager */
+        $EntityManager = self::getContainer()->get(EntityManagerInterface::class);
 
-        self::clearTestData($em);
-    }
-
-    /**
-     * Удаляем тестовые данные после завершения всех тестов
-     *
-     * @return void
-     */
-    public static function tearDownAfterClass(): void
-    {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
-
-        self::clearTestData($em);
-    }
-
-    /**
-     * Удаляет тестовые данные
-     *
-     * @param EntityManagerInterface $em
-     * @return void
-     */
-    private static function clearTestData(EntityManagerInterface $em): void
-    {
-        $carModelPetrol = $em->getRepository(CarModelWheel::class)
+        $carModelPetrol = $EntityManager
+            ->getRepository(CarModelWheel::class)
             ->findOneBy(['id' => CarModelWheelUid::TEST]);
 
         if($carModelPetrol)
         {
-            $em->remove($carModelPetrol);
+            $EntityManager->remove($carModelPetrol);
         }
 
-        $modelPetrolDiameter = $em->getRepository(CarModelWheelDiameter::class)
-            ->findOneBy(['carModelWheel' => CarModelWheelUid::TEST]);
+        $modelPetrolDiameter = $EntityManager
+            ->getRepository(CarModelWheelDiameter::class)
+            ->findOneBy(['wheel' => CarModelWheelUid::TEST]);
 
         if($modelPetrolDiameter)
         {
-            $em->remove($modelPetrolDiameter);
+            $EntityManager->remove($modelPetrolDiameter);
         }
 
-        $modelPetrolBar = $em->getRepository(CarModelWheelBar::class)
-            ->findOneBy(['carModelWheel' => CarModelWheelUid::TEST]);
+        $modelPetrolBar = $EntityManager
+            ->getRepository(CarModelWheelBar::class)
+            ->findOneBy(['wheel' => CarModelWheelUid::TEST]);
 
         if($modelPetrolBar)
         {
-            $em->remove($modelPetrolBar);
+            $EntityManager->remove($modelPetrolBar);
         }
 
-        $modelPetrolBackspacing = $em->getRepository(CarModelWheelBackspacing::class)
-            ->findOneBy(['carModelWheel' => CarModelWheelUid::TEST]);
+        $modelPetrolBackspacing = $EntityManager
+            ->getRepository(CarModelWheelBackspacing::class)
+            ->findOneBy(['wheel' => CarModelWheelUid::TEST]);
 
         if($modelPetrolBackspacing)
         {
-            $em->remove($modelPetrolBackspacing);
+            $EntityManager->remove($modelPetrolBackspacing);
         }
 
-        $modelPetrolOffsetRange = $em->getRepository(CarModelWheelOffsetRange::class)
-            ->findOneBy(['carModelWheel' => CarModelPetrolUid::TEST]);
+        $modelPetrolOffsetRange = $EntityManager
+            ->getRepository(CarModelWheelOffsetRange::class)
+            ->findOneBy(['wheel' => CarModelPetrolUid::TEST]);
 
         if($modelPetrolOffsetRange)
         {
-            $em->remove($modelPetrolOffsetRange);
+            $EntityManager->remove($modelPetrolOffsetRange);
         }
 
-        $modelPetrolProfile = $em->getRepository(CarModelWheelProfile::class)
-            ->findOneBy(['carModelWheel' => CarModelPetrolUid::TEST]);
+        $modelPetrolProfile = $EntityManager
+            ->getRepository(CarModelWheelProfile::class)
+            ->findOneBy(['wheel' => CarModelPetrolUid::TEST]);
 
         if($modelPetrolProfile)
         {
-            $em->remove($modelPetrolProfile);
+            $EntityManager->remove($modelPetrolProfile);
         }
 
-        $modelPetrolRim = $em->getRepository(CarModelWheelRim::class)
-            ->findOneBy(['carModelWheel' => CarModelPetrolUid::TEST]);
+        $modelPetrolRim = $EntityManager
+            ->getRepository(CarModelWheelRim::class)
+            ->findOneBy(['wheel' => CarModelPetrolUid::TEST]);
 
         if($modelPetrolRim)
         {
-            $em->remove($modelPetrolRim);
+            $EntityManager->remove($modelPetrolRim);
         }
 
-        $modelPetrolTireWeight = $em->getRepository(CarModelWheelTireWeight::class)
-            ->findOneBy(['carModelWheel' => CarModelPetrolUid::TEST]);
+        $modelPetrolTireWeight = $EntityManager
+            ->getRepository(CarModelWheelTireWeight::class)
+            ->findOneBy(['wheel' => CarModelPetrolUid::TEST]);
 
         if($modelPetrolTireWeight)
         {
-            $em->remove($modelPetrolTireWeight);
+            $EntityManager->remove($modelPetrolTireWeight);
         }
 
-        $modelPetrolWidth = $em->getRepository(CarModelWheelWidth::class)
-            ->findOneBy(['carModelWheel' => CarModelPetrolUid::TEST]);
+        $modelPetrolWidth = $EntityManager
+            ->getRepository(CarModelWheelWidth::class)
+            ->findOneBy(['wheel' => CarModelPetrolUid::TEST]);
 
         if($modelPetrolWidth)
         {
-            $em->remove($modelPetrolWidth);
+            $EntityManager->remove($modelPetrolWidth);
         }
 
-
-        $em->flush();
-        $em->clear();
+        $EntityManager->flush();
+        $EntityManager->clear();
     }
+
 
     public function testUseCase(): void
     {
         $carModelWheelHandler = self::getContainer()->get(CarModelWheelHandler::class);
 
         $carModelWheelDTO = new CarModelWheelDTO();
-        $carModelWheelDTO->setId(new CarModelWheelUid(CarModelWheelUid::TEST));
-        $carModelWheelDTO->setModelPetrol(new CarModelPetrolUid(CarModelPetrolUid::TEST));
 
         $carModelDiameterDTO = $carModelWheelDTO->getDiameter();
         $carModelDiameterDTO->setValue(new CarModelWheelDiameterField(CarModelWheelDiameterField::TEST));

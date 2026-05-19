@@ -21,10 +21,16 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Type\CarModels\Name;
 
 use BaksDev\Core\Services\Fields\FieldsChoiceInterface;
 use BaksDev\Core\Services\Reference\ReferenceChoiceInterface;
+use BaksDev\Core\Type\UidType\ParamConverter;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Controller\ValueResolverInterface;
+use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 
 /** Типы полей */
 final class CarModelName
@@ -61,5 +67,4 @@ final class CarModelName
     {
         return self::TYPE;
     }
-
 }

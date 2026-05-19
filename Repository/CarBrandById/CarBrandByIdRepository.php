@@ -1,4 +1,25 @@
 <?php
+/*
+ * Copyright 2026.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 
 declare(strict_types=1);
 
@@ -14,18 +35,13 @@ final class CarBrandByIdRepository implements CarBrandByIdInterface
 {
     private CarBrandUid|false $brand = false;
 
-    public function __construct(private DBALQueryBuilder $DBALQueryBuilder) {}
+    public function __construct(private readonly DBALQueryBuilder $DBALQueryBuilder) {}
 
     /**
      * Передаем в метод uid или сущность для дальнейшей передачи в запрос
-     *
-     * @param CarBrandUid|CarBrand $brand
-     *
-     * @return $this
      */
     public function forBrand(CarBrandUid|CarBrand $brand): self
     {
-
         if($brand instanceof CarBrand)
         {
             $brand = $brand->getId();
@@ -36,8 +52,9 @@ final class CarBrandByIdRepository implements CarBrandByIdInterface
         return $this;
     }
 
+
     /**
-     * Метод возвращает детальную информацию о бренда
+     * Метод возвращает детальную информацию о бренде
      */
     public function find(): CarBrandByIdResult|false
     {
@@ -48,6 +65,7 @@ final class CarBrandByIdRepository implements CarBrandByIdInterface
 
         $dbal = $this->DBALQueryBuilder->createQueryBuilder(self::class);
 
+
         /**
          * Получаем id бренда
          */
@@ -56,6 +74,7 @@ final class CarBrandByIdRepository implements CarBrandByIdInterface
             ->from(CarBrand::class, 'brand')
             ->where('brand.id = :id')
             ->setParameter('id', $this->brand, CarBrandUid::TYPE);
+
 
         /**
          * Получаем название бренда
@@ -68,6 +87,7 @@ final class CarBrandByIdRepository implements CarBrandByIdInterface
                 'name',
                 'name.brand = brand.id',
             );
+
 
         return $dbal->fetchHydrate(CarBrandByIdResult::class);
     }

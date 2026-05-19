@@ -25,91 +25,120 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\Tests;
 
+use BaksDev\Core\BaksDevCoreBundle;
 use BaksDev\Reference\Car\Entity\CarBrand\CarBrand;
+use BaksDev\Reference\Car\Entity\CarBrand\Image\CarBrandImage;
 use BaksDev\Reference\Car\Entity\CarBrand\Name\CarBrandName;
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
 use BaksDev\Reference\Car\Type\CarBrands\Name\CarBrandName as CarBrandNameField;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\CarBrandDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\CarBrandHandler;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\Image\CarBrandImageDTO;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\File;
 
-/**
- * @group reference-car
- * @group reference-car-usecase
- * @group reference-car-repository
- * @group reference-car-controller
- */
 #[When(env: 'test')]
-class CarBrandNewAdminUseCaseTest extends KernelTestCase
+#[Group('reference-car')]
+#[Group('reference-car-controller')]
+#[Group('reference-car-repository')]
+#[Group('reference-car-usecase')]
+final class CarBrandNewAdminUseCaseTest extends KernelTestCase
 {
     /**
      * Удаляем тестовые данные перед началом тестов
-     *
-     * @return void
      */
     public static function setUpBeforeClass(): void
     {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
+        /** @var EntityManagerInterface $EntityManager */
+        $EntityManager = self::getContainer()->get(EntityManagerInterface::class);
 
-        self::clearTestData($em);
-    }
-
-    /**
-     * Удаляем тестовые данные после завершения всех тестов
-     *
-     * @return void
-     */
-    public static function tearDownAfterClass(): void
-    {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
-
-        self::clearTestData($em);
-    }
-
-    /**
-     * Удаляет тестовые данные
-     *
-     * @param EntityManagerInterface $em
-     * @return void
-     */
-    private static function clearTestData(EntityManagerInterface $em): void
-    {
-        $brand = $em->getRepository(CarBrand::class)
+        $brand = $EntityManager
+            ->getRepository(CarBrand::class)
             ->findOneBy(['id' => CarBrandUid::TEST]);
 
         if($brand)
         {
-            $em->remove($brand);
+            $EntityManager->remove($brand);
         }
 
-        $brandName = $em->getRepository(CarBrandName::class)
+        $brandName = $EntityManager
+            ->getRepository(CarBrandName::class)
             ->findOneBy(['brand' => CarBrandUid::TEST]);
 
         if($brandName)
         {
-            $em->remove($brandName);
+            $EntityManager->remove($brandName);
         }
 
-        $em->flush();
-        $em->clear();
-    }
+        $brandImage = $EntityManager
+            ->getRepository(CarBrandImage::class)
+            ->findOneBy(['brand' => CarBrandUid::TEST]);
 
+        if($brandImage)
+        {
+            $EntityManager->remove($brandImage);
+        }
+
+        $EntityManager->flush();
+        $EntityManager->clear();
+    }
+    
+    
     public function testUseCase(): void
     {
-
         $CarBrandHandler = self::getContainer()->get(CarBrandHandler::class);
 
-        $carBrandDTO = new CarBrandDTO();
-        $carBrandDTO->setId(new CarBrandUid(CarBrandUid::TEST));
+        $CarBrandDTO = new CarBrandDTO();
+        $CarBrandDTO->setId(new CarBrandUid());
 
-        $CarBrandNameDTO = $carBrandDTO->getName();
-        $CarBrandNameDTO->setValue(new CarBrandNameField(CarBrandNameField::TEST));
+        $CarBrandNameDTO = $CarBrandDTO->getName();
+        $CarBrandNameDTO
+            ->setValue(new CarBrandNameField(CarBrandNameField::TEST))
+            ->setUrl(strtr(strtolower(CarBrandNameField::TEST), ['(' => '', ')' => '', ' ' => '-', '/' => '-']));
 
-        $carBrand = $CarBrandHandler->handle($carBrandDTO);
+
+        /**
+         * Изображние бренда
+         */
+
+        $containerBag = self::getContainer()->get(ContainerBagInterface::class);
+        $Filesystem = self::getContainer()->get(Filesystem::class);
+
+
+        /** Создаем путь к тестовой директории */
+        $testUploadDir = implode(
+            DIRECTORY_SEPARATOR,
+            [$containerBag->get('kernel.project_dir'), 'public', 'upload', 'tests']
+        );
+
+
+        $Filesystem->copy(
+            BaksDevCoreBundle::PATH.implode(
+                DIRECTORY_SEPARATOR,
+                ['Resources', 'assets', 'img', 'empty.webp']
+            ),
+            $testUploadDir.DIRECTORY_SEPARATOR.'photo.webp'
+        );
+
+        $filePhoto = new File($testUploadDir.DIRECTORY_SEPARATOR.'photo.webp', false);
+
+
+        /** Тестируем добавление фото */
+        $image = new CarBrandImageDTO()
+            ->setFile($filePhoto)
+            ->setExt('webp')
+            ->setName('test')
+            ->setSize(1);
+
+        $CarBrandDTO->setImage($image);
+
+
+        $carBrand = $CarBrandHandler->handle($CarBrandDTO);
 
         self::assertInstanceOf(CarBrand::class, $carBrand);
     }

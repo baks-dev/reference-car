@@ -1,0 +1,109 @@
+<?php
+/*
+ * Copyright 2026.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+
+declare(strict_types=1);
+
+namespace BaksDev\Reference\Car\Repository\CarModelGenerationById;
+
+use BaksDev\Core\Doctrine\DBALQueryBuilder;
+use BaksDev\Reference\Car\Entity\CarBrand\CarBrand;
+use BaksDev\Reference\Car\Entity\CarBrand\Name\CarBrandName;
+use BaksDev\Reference\Car\Entity\CarModel\CarModel;
+use BaksDev\Reference\Car\Entity\CarModel\Name\CarModelName;
+use BaksDev\Reference\Car\Entity\CarModelGeneration\CarModelGeneration;
+use BaksDev\Reference\Car\Entity\CarModelGeneration\Name\CarModelGenerationName;
+use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
+use Generator;
+
+final readonly class CarModelGenerationByIdRepository implements CarModelGenerationByIdInterface
+{
+    public function __construct(private DBALQueryBuilder $DBALQueryBuilder) {}
+
+    public function find(CarModelGenerationUid $generation): CarModelGenerationByIdResult|false
+    {
+        $dbal = $this->DBALQueryBuilder->createQueryBuilder(self::class);
+
+        /**
+         * Основной запрос для получения данных поколения
+         */
+        $dbal
+            ->select('generation.id')
+            ->from(CarModelGeneration::class, 'generation')
+            ->where('generation.id = :id')
+            ->setParameter('id', $generation, CarModelGenerationUid::TYPE);
+
+
+        $dbal
+            ->addSelect('name.value as name')
+            ->join(
+                'generation',
+                CarModelGenerationName::class,
+                'name',
+                'name.generation = generation.id'
+            );
+
+
+        /**
+         * Получаем id модели
+         */
+        $dbal
+            ->addSelect('model.id as model_id')
+            ->join('generation', CarModel::class, 'model', 'model.id = generation.model');
+
+
+        /**
+         * Получаем имя модели
+         */
+        $dbal
+            ->addSelect('model_name.value as model_name')
+            ->join(
+                'model',
+                CarModelName::class,
+                'model_name',
+                'model_name.model = model.id',
+            );
+
+
+        /**
+         * Получаем id модели
+         */
+        $dbal
+            ->addSelect('brand.id as brand_id')
+            ->join('model', CarBrand::class, 'brand', 'brand.id = model.brand');
+
+
+        /**
+         * Получаем имя модели
+         */
+        $dbal
+            ->addSelect('brand_name.value as brand_name')
+            ->join(
+                'brand',
+                CarBrandName::class,
+                'brand_name',
+                'brand_name.brand = brand.id',
+            );
+
+        return $dbal->fetchHydrate(CarModelGenerationByIdResult::class);
+    }
+}

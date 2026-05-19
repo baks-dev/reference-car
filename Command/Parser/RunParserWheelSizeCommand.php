@@ -26,13 +26,16 @@ declare(strict_types=1);
 namespace BaksDev\Reference\Car\Command\Parser;
 
 use BaksDev\Core\Command\Update\ProjectUpgradeInterface;
+use BaksDev\Core\Messenger\MessageDelay;
 use BaksDev\Core\Messenger\MessageDispatchInterface;
 use BaksDev\Reference\Car\Messenger\WheelSize\CarBrand\ParserCarBrandMessage;
 use BaksDev\Reference\Car\Messenger\WheelSize\MainPage\ParserMainPageRequest;
 use Psr\Log\LoggerInterface;
+use Random\Randomizer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
@@ -40,30 +43,44 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\DomCrawler\Crawler;
 
 #[AsCommand(
-    name: 'baks:parser:run',
+    name: 'baks:reference-car:parser:run',
     description: 'Запуск парсера',
 )]
 #[AutoconfigureTag('baks.project.upgrade')]
 class RunParserWheelSizeCommand extends Command implements ProjectUpgradeInterface
 {
     /* URL начала парсинга */
-    private const WHEEL_SIZE_URL = 'https://www.wheel-size.com/size/';
+    public const string WHEEL_SIZE_URL = 'https://www.wheel-size.com';
+
+
+    public const bool IS_ASYNC = false;
 
     public function __construct(
-        #[Target('referenceCarLogger')] private LoggerInterface $logger,
-        private MessageDispatchInterface $messageDispatch,
-        private ParserMainPageRequest $parserMainPageRequest
+        #[Target('referenceCarLogger')] private readonly LoggerInterface $logger,
+        private readonly MessageDispatchInterface $messageDispatch,
+        private readonly ParserMainPageRequest $parserMainPageRequest
     )
     {
-        $this->parserMainPageRequest = $parserMainPageRequest;
         parent::__construct();
     }
 
-    /** Чам выше число - тем первым в итерации будет значение */
+    protected function configure(): void
+    {
+        $this->addOption(
+            'force',
+            'f',
+            InputOption::VALUE_NONE,
+            'Парсинг в обход дедубликатора ((--force || -f))'
+        );
+    }
+
+
+    /** Чам выше число - тем первее в итерации будет значение */
     public static function priority(): int
     {
         return 100;
     }
+
 
     /**
      * Выполняет команду по парсингу
@@ -79,13 +96,17 @@ class RunParserWheelSizeCommand extends Command implements ProjectUpgradeInterfa
         $io->text("Начинаем парсинг сайта wheel-size.com");
         $this->logger->info('Начинаем парсинг сайта wheel-size.com');
 
-        // получаем HTML с главной страницы
-        $html = $this->parserMainPageRequest->fetchHtml(self::WHEEL_SIZE_URL);
 
-        $crawler = new Crawler($html, self::WHEEL_SIZE_URL);
+        // получаем HTML с главной страницы
+        $html = $this->parserMainPageRequest->fetchHtml(self::WHEEL_SIZE_URL.'/size/');
+
+
+        $crawler = new Crawler($html, self::WHEEL_SIZE_URL.'/size/');
+
 
         // Ищет список брендов
         $brandList = $crawler->filter('.brand-list-others');
+
 
         // Если бренды найдены, то начинает получать значения с HTML
         if($brandList->count() > 0)
@@ -100,7 +121,7 @@ class RunParserWheelSizeCommand extends Command implements ProjectUpgradeInterfa
             //Поскольку парсится все, то много одинаковых элементов. Оставляем уникальные
             $brands = array_values(array_column($brands, null, 'title'));
 
-            foreach($brands as $key => $brand)
+            foreach($brands as $brand)
             {
                 // Составляем имя класса бренда
                 $brand['class_name'] = preg_replace(
@@ -113,21 +134,34 @@ class RunParserWheelSizeCommand extends Command implements ProjectUpgradeInterfa
                     ),
                 );
 
+                $sleep = new Randomizer()->getInt(3, 7);
+
+                if(false === RunParserWheelSizeCommand::IS_ASYNC)
+                {
+                    sleep($sleep);
+                }
+
+
                 // Отправляяем данные в очередь
                 $this->messageDispatch->dispatch(
                     message: new ParserCarBrandMessage(
                         (string) $brand['href'],
                         (string) $brand['class_name'],
                         (string) $brand['title'],
+                        $input->getOption('force')
                     ),
-                //                    stamps: [new MessageDelay('5 seconds')],
-                //                    transport: (string) 'reference-car'
+                    stamps: self::IS_ASYNC ? [new MessageDelay(sprintf(
+                        '%s seconds',
+                        $sleep
+                    ))] : [],
+                    transport: self::IS_ASYNC ? 'reference-car' : null
                 );
             }
         }
 
         $io->text("Парсинг завершен");
         $this->logger->info('Парсинг успешно завершен!');
+
         return Command::SUCCESS;
     }
 }

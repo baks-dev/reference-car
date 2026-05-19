@@ -25,28 +25,27 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Messenger\WheelSize\MainPage;
 
+use BaksDev\Reference\Car\Command\Parser\RunParserWheelSizeCommand;
 use BaksDev\Reference\Car\Messenger\WheelSize\WheelSize;
 use DateInterval;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
+#[Autoconfigure(shared: false)]
 final class ParserMainPageRequest extends WheelSize
 {
-    /* Протокол и домен парсинга */
-    private const WHEEL_SIZE_URI = 'https://www.wheel-size.com';
-
     /* Задержка между запросами в секундах */
-    private const REQUEST_DELAY = 4;
+    private const int REQUEST_DELAY = 4;
+
 
     public function __construct(
-        #[Target('referenceCarLogger')] private LoggerInterface $logger,
-        private CacheInterface $cache,
-    )
-    {
-        $this->cache = $cache;
-    }
+        #[Target('referenceCarLogger')] private readonly LoggerInterface $logger,
+        private readonly CacheInterface $cache,
+    ) {}
+
 
     /**
      * Получает HTML-контент по указанному URL.
@@ -58,7 +57,7 @@ final class ParserMainPageRequest extends WheelSize
     public function fetchHtml(string $url): string|false
     {
         $cacheKey = md5('parser_request_'.$url);
-        $url = str_starts_with($url, 'http') ? $url : self::WHEEL_SIZE_URI.$url;
+        $url = str_starts_with($url, 'http') ? $url : RunParserWheelSizeCommand::WHEEL_SIZE_URL.$url;
 
         /**
          * Получает HTML из кеша,
@@ -78,17 +77,13 @@ final class ParserMainPageRequest extends WheelSize
 
             $this->logger->info('Выполняем запрос на '.$url);
             $response = $client->request('GET', $url);
-            //            $client->waitFor('.page-wrapper', 10);
 
             $content = $client->getPageSource();
 
-            if(isset($client))
-            {
-                echo 'Закрыли клиент для '.$url.PHP_EOL;
-                $client->quit();
-            }
+            echo 'Закрыли клиент для '.$url.PHP_EOL;
+            $client->quit();
 
-            if(empty($content)/* || $this->getResponseStatusCode($client) !== 200*/)
+            if(true === empty($content))
             {
                 $this->logger->error('Ошибка запроса на '.$url.' статус ответа: '.$response->getStatusCode());
 

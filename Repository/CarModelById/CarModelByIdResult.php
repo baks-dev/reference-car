@@ -1,9 +1,29 @@
 <?php
+/*
+ * Copyright 2026.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 
 declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Repository\CarModelById;
-
 
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
 use BaksDev\Reference\Car\Type\CarBrands\Name\CarBrandName;
@@ -12,14 +32,11 @@ use BaksDev\Reference\Car\Type\CarModels\Name\CarModelName;
 
 final readonly class CarModelByIdResult
 {
-
     public function __construct(
         private string $id,
+        private string $name,
         private string $brand,
         private string $brand_name,
-        private string $name,
-        private ?string $years,
-        private ?string $regions
     ) {}
 
     public function getId(): CarModelUid
@@ -32,7 +49,7 @@ final readonly class CarModelByIdResult
         return new CarBrandUid($this->brand);
     }
 
-    public function getBrand_name(): CarBrandName
+    public function getBrandName(): CarBrandName
     {
         return new CarBrandName($this->brand_name);
     }
@@ -41,57 +58,4 @@ final readonly class CarModelByIdResult
     {
         return new CarModelName($this->name);
     }
-
-    public function getYears(): array|false
-    {
-        if(empty($this->years))
-        {
-            return false;
-        }
-
-        if(false == json_validate($this->years))
-        {
-            return false;
-        }
-
-        return json_decode($this->years, true, 512, JSON_THROW_ON_ERROR);
-    }
-
-    public function getSaleRegions(): array|false
-    {
-
-        if(empty($this->regions))
-        {
-            return false;
-        }
-
-        if(false == json_validate($this->regions))
-        {
-            return false;
-        }
-
-        return json_decode($this->regions, true, 512, JSON_THROW_ON_ERROR);
-    }
-
-    public function getRegions(): string|false
-    {
-        $regions = $this->getSaleRegions();
-
-        return $regions ? implode(', ', $regions) : false;
-    }
-
-
-    public function getYearRange(): string
-    {
-        $minYear = $this->getYears() !== false ? current(min($this->getYears())) : '';
-        $maxYear = $this->getYears() !== false ? current(max($this->getYears())) : '';
-
-        if($minYear === $maxYear)
-        {
-            return $minYear;
-        }
-
-        return sprintf('%s - %s', $minYear, $maxYear);
-    }
-
 }

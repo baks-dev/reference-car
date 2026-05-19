@@ -1,4 +1,25 @@
 <?php
+/*
+ * Copyright 2026.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 
 declare(strict_types=1);
 
@@ -7,27 +28,30 @@ namespace BaksDev\Reference\Car\Repository\CarModelPetrolById\Tests;
 use BaksDev\Reference\Car\Repository\CarModelPetrolById\CarModelPetrolByIdInterface;
 use BaksDev\Reference\Car\Repository\CarModelPetrolById\CarModelPetrolByIdResult;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\Tests\CarModelPetrolNewAdminUseCaseTest;
+use PHPUnit\Framework\Attributes\DependsOnClass;
+use PHPUnit\Framework\Attributes\Group;
 use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-
-/**
- * @group reference-car
- */
 #[Group('reference-car')]
+#[Group('reference-car-repository')]
 #[When(env: 'test')]
 class CarModelPetrolByIdRepositoryTest extends KernelTestCase
 {
+    #[DependsOnClass(CarModelPetrolNewAdminUseCaseTest::class)]
     public function testUseCase(): void
     {
         /** @var CarModelPetrolByIdInterface $CarModelPetrolByIdRepository */
         $CarModelPetrolByIdRepository = self::getContainer()->get(CarModelPetrolByIdInterface::class);
 
-        $CarModelPetrolByIdResult = $CarModelPetrolByIdRepository
-            ->forModelPetrol(new CarModelPetrolUid('0198560a-8d86-74a5-b8bb-e458a3f65304'))
-            ->find();
+        $CarModelPetrolByIdResult = $CarModelPetrolByIdRepository->find(new CarModelPetrolUid());
+
+
+        self::assertInstanceOf(CarModelPetrolByIdResult::class, $CarModelPetrolByIdResult);
+
 
         // Вызываем все геттеры
         $reflectionClass = new ReflectionClass(CarModelPetrolByIdResult::class);
@@ -42,8 +66,5 @@ class CarModelPetrolByIdRepositoryTest extends KernelTestCase
                 $method->invoke($CarModelPetrolByIdResult);
             }
         }
-
-        self::assertTrue(true);
     }
-
 }

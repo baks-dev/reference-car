@@ -1,5 +1,4 @@
 <?php
-
 /*
  *  Copyright 2025.  Baks.dev <admin@baks.dev>
  *
@@ -22,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarModelPetrol\PS;
 
 use BaksDev\Core\Entity\EntityState;
@@ -29,8 +30,7 @@ use BaksDev\Reference\Car\Entity\CarModelPetrol\CarModelPetrol;
 use BaksDev\Reference\Car\Type\CarModelPetrols\PS\CarModelPetrolPS as PSField;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
-
-/* CarModelPetrolPS */
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'car_model_petrol_ps')]
@@ -76,6 +76,11 @@ class CarModelPetrolPS extends EntityState
         }
 
         throw new InvalidArgumentException(sprintf('Class %s interface error', $dto::class));
+    }
+
+    public function getPetrol(): CarModelPetrol
+    {
+        return $this->petrol;
     }
 
     public function getValue(): PSField

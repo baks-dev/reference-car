@@ -25,97 +25,137 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Messenger\WheelSize\CarBrand;
 
+use BaksDev\Core\Deduplicator\Deduplicator;
+use BaksDev\Core\Deduplicator\DeduplicatorInterface;
+use BaksDev\Core\Messenger\MessageDelay;
 use BaksDev\Core\Messenger\MessageDispatchInterface;
+use BaksDev\Reference\Car\Command\Parser\RunParserWheelSizeCommand;
 use BaksDev\Reference\Car\Messenger\WheelSize\CarBrandImage\ParserCarBrandImageMessage;
 use BaksDev\Reference\Car\Messenger\WheelSize\CarModel\ParserCarModelMessage;
+use BaksDev\Reference\Car\Service\CarBrand\CarBrandClassCheckerDTO;
 use BaksDev\Reference\Car\Service\CarBrand\CarBrandClassCheckerService;
-use BaksDev\Reference\Car\Service\CarBrand\CarBrandNameClassCheckerService;
+use BaksDev\Reference\Car\Type\CarBrands\CarBrand;
+use DateInterval;
 use Psr\Log\LoggerInterface;
+use Random\Randomizer;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(priority: 0)]
-final class ParserCarBrandInvariableHandler
+#[Autoconfigure(shared: false)]
+final readonly class ParserCarBrandInvariableHandler
 {
-    /* Протокол и домен парсинга */
-    private const WHEEL_SIZE_URI = 'https://www.wheel-size.com';
-
     public function __construct(
         #[Target('referenceCarLogger')] private LoggerInterface $logger,
+        private DeduplicatorInterface $Deduplicator,
         private MessageDispatchInterface $messageDispatch,
         private CarBrandClassCheckerService $carBrandClassCheckerService,
-        private CarBrandNameClassCheckerService $carBrandNameClassCheckerService,
         private ParserCarBrandRequest $parserCarBrandRequest
     ) {}
 
     public function __invoke(ParserCarBrandMessage $message): void
     {
-        // Проверяем есть ли класс бренда. Если нет, то генерируем
-        $this->carBrandClassCheckerService->checkBrand($message);
+        if(false === $message->isForced())
+        {
+            /** Делаем проверку дедупликатором */
+            $Deduplicator = $this->Deduplicator
+                ->namespace('reference-car')
+                ->expiresAfter(DateInterval::createFromDateString('1 day'))
+                ->deduplication([$message->getClassName(), md5(self::class)]);
 
-        // Проверяем есть ли класс названия бренда. Если нет, то генерируем
-        $this->carBrandNameClassCheckerService->checkBrandName($message);
+            if($Deduplicator->isExecuted())
+            {
+                return;
+            }
+        }
+
+        $CarBrandClassCheckerDTO = new CarBrandClassCheckerDTO($message->getClassName(), $message->getTitle());
+
+
+        // Проверяем есть ли класс бренда. Если нет, то генерируем
+        $this->carBrandClassCheckerService->checkBrand($CarBrandClassCheckerDTO);
+
 
         // Парсим внутреннюю страницу бренда
         $this->parseBrands($message);
+
+
+        if(false === $message->isForced())
+        {
+            /** @var Deduplicator $Deduplicator */
+            $Deduplicator->save();
+        }
     }
+
 
     /**
      * Парсит внутренние страницы брендов
-     *
-     * @param ParserCarBrandMessage $message
-     *
-     * @return void
      */
     private function parseBrands(ParserCarBrandMessage $message): void
     {
-        $carBrand = $message->getAll();
-        echo $carBrand['title'].PHP_EOL;
+        echo 'Начинаем парсить бренд '.$message->getTitle().' по url: '.$message->getUrl().PHP_EOL;
+        $this->logger->info('Начинаем парсить бренд '.$message->getTitle().' по url: '.$message->getUrl());
 
-        echo 'Начинаем парсить бренд '.$carBrand['title'].' по url: '.$carBrand['href'].PHP_EOL;
 
         // Получаем HTML с внутренней страницы бренда
-        $html = $this->parserCarBrandRequest->fetchHtml($carBrand['href']);
-        $crawler = new Crawler($html, $carBrand['href']);
+        $html = $this->parserCarBrandRequest->fetchHtml($message->getUrl());
+        $crawler = new Crawler($html, $message->getUrl());
 
-        // Скачиваем картинку бренда
+
+        // Получаем изображения бренда для скачивания
         $carBrandImage = $crawler->filter('.figure-img.img-fluid.rounded.float-right.float-sm-none.mr-2');
+
 
         if($carBrandImage->count() > 0)
         {
-            //        $this->saveBrandImage($crawler, $message);
+            $sleep = new Randomizer()->getInt(3, 7);
+
+            if(false === RunParserWheelSizeCommand::IS_ASYNC)
+            {
+                sleep($sleep);
+            }
+
             $this->messageDispatch->dispatch(
                 new ParserCarBrandImageMessage(
                     $carBrandImage->attr('src'),
                     $message->getTitle(),
-                    $carBrand['class_name'],
+                    $message->getClassName(),
                     $message->getNamespace(),
+                    $message->isForced()
                 ),
-            //                stamps: [new MessageDelay('5 seconds')],
-            //                transport: (string) 'reference-car'
+                stamps: RunParserWheelSizeCommand::IS_ASYNC ? [new MessageDelay(sprintf(
+                    '%s seconds',
+                    $sleep
+                ))] : [],
+                transport: RunParserWheelSizeCommand::IS_ASYNC ? 'reference-car' : null
             );
         }
+
 
         // Ищет список моделей
         $cardGroup = $crawler->filter('.divideIntoColumns');
 
+
         // Если модели найдены, то начинает получать значения с HTML
         if($cardGroup->count() > 0)
         {
-            $carModels = $cardGroup->filter('a')->each(function(Crawler $node) {
-                return [
-                    'href' => $node->attr('href'),
-                    'title' => trim($node->filter('.model-name')->text()),
-                    //                    'image' => trim($node->filter('.img-responsive.img-fluid.img-typical')->attr('src')),
-                    'date' => trim($node->filter('.fw-300.d-block')->text()),
-                ];
-            });
+            $carModels = $cardGroup
+                ->filter('a')
+                ->each(function(Crawler $node)
+                    {
+                        return [
+                            'href' => $node->attr('href'),
+                            'title' => trim($node->filter('.model-name')->text()),
+                        ];
+                    }
+                );
 
             foreach($carModels as $carModel)
             {
                 // Составляем имя класса модели
-                $carModel['class_name'] = preg_replace(
+                $carModel['class_name'] = $message->getClassName().preg_replace(
                     '/[^a-zA-Z0-9]/',
                     '',
                     str_replace(
@@ -125,18 +165,29 @@ final class ParserCarBrandInvariableHandler
                     ),
                 );
 
+
+                $sleep = new Randomizer()->getInt(3, 7);
+
+                if(false === RunParserWheelSizeCommand::IS_ASYNC)
+                {
+                    sleep($sleep);
+                }
+
+
                 // Отправляяем данные в очередь
                 $this->messageDispatch->dispatch(
                     new ParserCarModelMessage(
-                        (string) $carModel['href'],
-                        (string) $carModel['date'],
-                        (string) $carModel['class_name'],
-                        (string) $carModel['title'],
-                        //                        (string) $carModel['image'],
-                        (array) $carModel['brand'] = $carBrand,
+                        $carModel['href'],
+                        $carModel['class_name'],
+                        $carModel['title'],
+                        new CarBrand($message->getTitle(), $message->getNamespace()),
+                        $message->isForced(),
                     ),
-                //                    stamps: [new MessageDelay('5 seconds')],
-                //                    transport: (string) 'reference-car'
+                    stamps: RunParserWheelSizeCommand::IS_ASYNC ? [new MessageDelay(sprintf(
+                        '%s seconds',
+                        $sleep
+                    ))] : [],
+                    transport: RunParserWheelSizeCommand::IS_ASYNC ? 'reference-car' : null
                 );
             }
         }

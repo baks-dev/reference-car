@@ -26,12 +26,15 @@ declare(strict_types=1);
 namespace BaksDev\Reference\Car\Command\Upload;
 
 use BaksDev\Core\Command\Update\ProjectUpgradeInterface;
+use BaksDev\Reference\Car\BaksDevReferenceCarBundle;
 use BaksDev\Reference\Car\Entity\CarBrand\CarBrand;
 use BaksDev\Reference\Car\Repository\ExistCarBrand\ExistCarBrandInterface;
-use BaksDev\Reference\Car\Type\CarBrands\Id\Brands\CarBrandsInterface;
-use BaksDev\Reference\Car\Type\CarBrands\Name\Brands\CarBrandsNameInterface;
+use BaksDev\Reference\Car\Type\CarBrands\Brands\CarBrandsInterface;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\CarBrandDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\CarBrandHandler;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\Image\CarBrandImageDTO;
+use DirectoryIterator;
+use SplFileInfo;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -39,42 +42,40 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+use Symfony\Component\Filesystem\Filesystem;
 
-#[AsCommand(
-    name: 'baks:car:brands-load',
-    description: 'Загружает бренды автомобилей из классов в базу данных',
-)]
+#[AsCommand(name: 'baks:car:brands-load', description: 'Загружает бренды автомобилей из классов в базу данных')]
 #[AutoconfigureTag('baks.project.upgrade')]
 class RunUploadBrandsCommand extends Command implements ProjectUpgradeInterface
 {
     public function __construct(
-        private readonly CarBrandHandler $carBrandHandler,
+        private readonly CarBrandHandler $CarBrandHandler,
         private readonly ExistCarBrandInterface $ExistCarBrandRepository,
-
         #[AutowireIterator('baks.car.brands')] private readonly iterable $carBrands,
-        #[AutowireIterator('baks.car.brands.name')] private readonly iterable $carBrandsName
     )
     {
         parent::__construct();
     }
 
-    /** Чем выше число - тем первым в итерации будет значение */
+
+    /** Чем выше число - тем первее в итерации будет значение */
     public static function priority(): int
     {
         return 100;
     }
+
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
         $io->text("Загрузка брендов автомобилей");
 
+
         /**
          * Счетчик загруженных элементов для вывода статистики
          */
         $count = 0;
 
-        $carBrandsName = iterator_to_array($this->carBrandsName);
 
         /** @var CarBrandsInterface $carBrand */
         foreach($this->carBrands as $carBrand)
@@ -87,23 +88,73 @@ class RunUploadBrandsCommand extends Command implements ProjectUpgradeInterface
                 continue;
             }
 
-            $carBrandDTO = new CarBrandDTO();
-            $carBrandDTO->setId($carBrand::getUid());
 
-            /** @var CarBrandsNameInterface $carBrandName */
-            foreach($carBrandsName as $carBrandName)
+            $CarBrandDTO = new CarBrandDTO();
+
+            $CarBrandDTO->setId($carBrand::getUid());
+
+            $CarBrandNameDTO = $CarBrandDTO->getName();
+            $CarBrandNameDTO
+                ->setValue($carBrand::getValue())
+                ->setUrl(strtr(
+                    strtolower((string)$carBrand::getValue()),
+                    ['(' => '', ')' => '', ' ' => '-', '/' => '-']
+                ));
+
+
+            /**
+             * Сохраняем данные об изображении бренда
+             */
+
+            /** Директория, в которой будет производиться поиск изображения по идентификтору бренда */
+            $imagePath = implode(DIRECTORY_SEPARATOR, [
+                rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
+                'Resources',
+                'upload',
+                'car_brand_image',
+                (string)$carBrand::getUid()
+            ]);
+
+            $Filesystem = new Filesystem();
+
+            if($Filesystem->exists($imagePath))
             {
-                if(true === $carBrandName::equals($carBrand::getUid()))
+                $directory = new DirectoryIterator($imagePath);
+
+
+                /** @var SplFileInfo $info */
+                foreach($directory as $info)
                 {
-                    $CarBrandNameDTO = $carBrandDTO->getName();
-                    $CarBrandNameDTO->setValue($carBrandName::getValue());
+                    if($info->isFile() === false)
+                    {
+                        continue;
+                    }
+
+                    if(false === in_array($info->getExtension(), ['png', 'gif', 'jpg', 'jpeg', 'webp']))
+                    {
+                        continue;
+                    }
+
+                    if(true === str_starts_with($info->getFilename(), 'image'))
+                    {
+                        $CarBrandImageDTO = new CarBrandImageDTO()
+                            ->setName((string)$carBrand::getUid())
+                            ->setExt($info->getExtension())
+                            ->setSize($info->getSize());
+
+                        $CarBrandDTO->setImage($CarBrandImageDTO);
+
+                        break;
+                    }
                 }
             }
+
 
             /**
              * Создаем новый бренд
              */
-            $carBrand = $this->carBrandHandler->handle($carBrandDTO);
+            $carBrand = $this->CarBrandHandler->handle($CarBrandDTO);
+
 
             /**
              * Выдаем сообщение в консоль об успехе загрузки бренда
@@ -111,11 +162,11 @@ class RunUploadBrandsCommand extends Command implements ProjectUpgradeInterface
             if($carBrand instanceof CarBrand)
             {
                 $count++;
-                $io->text("Добавлен бренд: {$carBrand->getName()}");
+                $io->text("Добавлен бренд: ".$carBrand->getName());
             }
         }
 
-        $io->text("Загружено элементов: {$count}");
+        $io->text("Загружено элементов: ".$count);
         $io->text("Загрузка завершена");
         return Command::SUCCESS;
     }

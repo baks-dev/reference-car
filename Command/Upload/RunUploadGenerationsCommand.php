@@ -26,12 +26,15 @@ declare(strict_types=1);
 namespace BaksDev\Reference\Car\Command\Upload;
 
 use BaksDev\Core\Command\Update\ProjectUpgradeInterface;
+use BaksDev\Reference\Car\BaksDevReferenceCarBundle;
 use BaksDev\Reference\Car\Entity\CarModelGeneration\CarModelGeneration;
 use BaksDev\Reference\Car\Repository\ExistCarModelGeneration\ExistCarModelGenerationInterface;
-use BaksDev\Reference\Car\Type\CarModelGenerations\Id\ModelGenerations\CarModelGenerationsInterface;
-use BaksDev\Reference\Car\Type\CarModelGenerations\Name\ModelGenerations\CarModelGenerationsNameInterface;
+use BaksDev\Reference\Car\Type\CarModelGenerations\ModelGenerations\CarModelGenerationsInterface;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\CarModelGenerationDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\CarModelGenerationHandler;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\Image\CarModelGenerationImageDTO;
+use DirectoryIterator;
+use SplFileInfo;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -39,6 +42,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[AsCommand(
     name: 'baks:car:model-generations-load',
@@ -50,13 +54,12 @@ class RunUploadGenerationsCommand extends Command implements ProjectUpgradeInter
     public function __construct(
         private readonly CarModelGenerationHandler $carModelGenerationHandler,
         private readonly ExistCarModelGenerationInterface $ExistCarModelGenerationRepository,
-
         #[AutowireIterator('baks.car.generations')] private readonly iterable $carModelGenerations,
-        #[AutowireIterator('baks.car.generations.name')] private readonly iterable $carModelGenerationsName
     )
     {
         parent::__construct();
     }
+
 
     /** Чем выше число - тем первым в итерации будет значение */
     public static function priority(): int
@@ -64,22 +67,23 @@ class RunUploadGenerationsCommand extends Command implements ProjectUpgradeInter
         return 100;
     }
 
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
         $io->text('Загрузка поколений автомобилей');
+
 
         /**
          * Счетчик загруженных элементов для вывода статистики
          */
         $count = 0;
 
-        $carModelGenerationsName = iterator_to_array($this->carModelGenerationsName);
 
         /** @var CarModelGenerationsInterface $carModelGeneration */
         foreach($this->carModelGenerations as $carModelGeneration)
         {
-            /** Проверяем что модель не добавлена */
+            /** Проверяем, что поколение не добавлено */
             $isExistCarModelGeneration = $this->ExistCarModelGenerationRepository->exist($carModelGeneration::getUid());
 
             if(true === $isExistCarModelGeneration)
@@ -87,40 +91,90 @@ class RunUploadGenerationsCommand extends Command implements ProjectUpgradeInter
                 continue;
             }
 
+
             /**
              * Создаем DTO для поколения вместе с названием поколения
              */
             $carModelGenerationDTO = new CarModelGenerationDTO();
+
             $carModelGenerationDTO->setId($carModelGeneration::getUid());
             $carModelGenerationDTO->setModel($carModelGeneration->getModelUid());
 
-            /** @var CarModelGenerationsNameInterface $carModelGenerationsName */
+            $carModelGenerationNameDTO = $carModelGenerationDTO->getName();
+            $carModelGenerationNameDTO
+                ->setValue($carModelGeneration::getValue())
+                ->setUrl(strtr(
+                    strtolower((string)$carModelGeneration::getValue()),
+                    ['(' => '', ')' => '', ' ' => '-', '/' => '-']
+                ));
 
-            foreach($carModelGenerationsName as $carModelGenerationName)
+
+            /**
+             * Сохраняем данные об изображении поколения
+             */
+
+            /** Директория, в которой будет производиться поиск изображения по идентификтору поколения */
+            $imagePath = implode(DIRECTORY_SEPARATOR, [
+                rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
+                'Resources',
+                'upload',
+                'car_model_generation_image',
+                (string)$carModelGeneration::getUid()
+            ]);
+
+            $Filesystem = new Filesystem();
+
+            if($Filesystem->exists($imagePath))
             {
-                if(true === $carModelGenerationName::equals($carModelGeneration::getUid()))
+                $directory = new DirectoryIterator($imagePath);
+
+
+                /** @var SplFileInfo $info */
+                foreach($directory as $info)
                 {
-                    $carModelGenerationNameDTO = $carModelGenerationDTO->getName();
-                    $carModelGenerationNameDTO->setValue($carModelGenerationName::getValue());
+                    if($info->isFile() === false)
+                    {
+                        continue;
+                    }
+
+                    if(false === in_array($info->getExtension(), ['png', 'gif', 'jpg', 'jpeg', 'webp']))
+                    {
+                        continue;
+                    }
+
+                    if(true === str_starts_with($info->getFilename(), 'image'))
+                    {
+                        $CarModelGenerationImageDTO = new CarModelGenerationImageDTO()
+                            ->setName((string)$carModelGeneration::getUid())
+                            ->setExt($info->getExtension())
+                            ->setSize($info->getSize());
+
+                        $carModelGenerationDTO->setImage($CarModelGenerationImageDTO);
+
+                        break;
+                    }
                 }
             }
+
 
             /**
              * Создаем новое поколение
              */
             $carModelGeneration = $this->carModelGenerationHandler->handle($carModelGenerationDTO);
 
+
             /**
-             * Выдаем сообщение в консоль об успехе загрузки модели
+             * Выдаем сообщение в консоль об успехе загрузки поколения
              */
             if($carModelGeneration instanceof CarModelGeneration)
             {
                 $count++;
-                $io->text("Добавлена модель: {$carModelGeneration->getName()}");
+                $io->text("Добавлено поколение: {$carModelGeneration->getName()}");
             }
         }
 
-        $io->text("Загружено model generation: {$count}");
+
+        $io->text("Загружено model generation: ".$count);
         $io->text("Загрузка завершена");
         return Command::SUCCESS;
     }

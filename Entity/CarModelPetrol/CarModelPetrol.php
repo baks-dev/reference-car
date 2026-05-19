@@ -1,5 +1,4 @@
 <?php
-
 /*
  *  Copyright 2025.  Baks.dev <admin@baks.dev>
  *
@@ -22,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarModelPetrol;
 
 use BaksDev\Core\Entity\EntityState;
@@ -29,13 +30,10 @@ use BaksDev\Reference\Car\Entity\CarModelPetrol\HP\CarModelPetrolHP;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\KW\CarModelPetrolKW;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\Name\CarModelPetrolName;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\PS\CarModelPetrolPS;
-use BaksDev\Reference\Car\Entity\CarModelPetrol\SaleRegion\CarModelPetrolSaleRegion;
 use BaksDev\Reference\Car\Entity\CarModelPetrol\Year\CarModelPetrolYear;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
-use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -44,18 +42,20 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'car_model_petrol')]
 class CarModelPetrol extends EntityState
 {
-    /** ID */
+    /** ID комплектации */
     #[Assert\NotBlank]
     #[Assert\Uuid]
     #[ORM\Id]
     #[ORM\Column(type: CarModelPetrolUid::TYPE)]
     private CarModelPetrolUid $id;
 
-    /** ID модели */
+
+    /** ID поколения */
     #[Assert\NotBlank]
     #[Assert\Uuid]
-    #[ORM\Column(name: 'model', type: CarModelUid::TYPE)]
-    private CarModelUid $model;
+    #[ORM\Column(name: 'generation', type: CarModelGenerationUid::TYPE)]
+    private CarModelGenerationUid $generation;
+
 
     #[ORM\OneToOne(targetEntity: CarModelPetrolName::class, mappedBy: 'petrol', cascade: ['all'])]
     private CarModelPetrolName $name;
@@ -69,36 +69,19 @@ class CarModelPetrol extends EntityState
     #[ORM\OneToOne(targetEntity: CarModelPetrolHP::class, mappedBy: 'petrol', cascade: ['all'])]
     private CarModelPetrolHP $hp;
 
-    /** ID поколения */
-    #[Assert\NotBlank]
-    #[Assert\Uuid]
-    #[ORM\Column(name: 'generation', type: CarModelGenerationUid::TYPE, nullable: true)]
-    private CarModelGenerationUid $generation;
-
-    #[ORM\OneToMany(
-        targetEntity: CarModelPetrolSaleRegion::class,
-        mappedBy: 'petrol',
-        cascade: ['all']
-    )]
-    private Collection $region;
-
-    #[ORM\OneToMany(
-        targetEntity: CarModelPetrolYear::class,
-        mappedBy: 'petrol',
-        cascade: ['all']
-    )]
-    private Collection $year;
+    #[ORM\OneToOne(targetEntity: CarModelPetrolYear::class, mappedBy: 'petrol', cascade: ['all'])]
+    private CarModelPetrolYear $year;
 
     public function __construct(CarModelPetrolUid $id)
     {
         $this->id = $id;
-        $this->model = new CarModelUid();
+
+        $this->generation = new CarModelGenerationUid();
         $this->name = new CarModelPetrolName($this);
         $this->ps = new CarModelPetrolPS($this);
         $this->kw = new CarModelPetrolKW($this);
         $this->hp = new CarModelPetrolHP($this);
-        $this->region = new ArrayCollection();
-        $this->year = new ArrayCollection();
+        $this->year = new CarModelPetrolYear($this);
     }
 
     public function __clone()
@@ -143,9 +126,9 @@ class CarModelPetrol extends EntityState
         return $this->name;
     }
 
-    public function getModel(): CarModelUid
+    public function getGeneration(): CarModelGenerationUid
     {
-        return $this->model;
+        return $this->generation;
     }
 
     public function getPs(): CarModelPetrolPS
@@ -163,18 +146,14 @@ class CarModelPetrol extends EntityState
         return $this->hp;
     }
 
-    public function getRegion(): Collection
-    {
-        return $this->region;
-    }
-
-    public function getYear(): Collection
+    public function getYear(): CarModelPetrolYear
     {
         return $this->year;
     }
 
-    public function setModel(CarModelUid $model): void
+    public function setGeneration(CarModelGenerationUid $generation): self
     {
-        $this->model = $model;
+        $this->generation = $generation;
+        return $this;
     }
 }

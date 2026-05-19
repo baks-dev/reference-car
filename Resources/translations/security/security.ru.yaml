@@ -1,127 +1,22 @@
 # Роль
-ROLE_CAR_BRAND:
-  name: 'Каталог брендов'
-  desc: 'Список брендов'
-  header: 'Бренды'
+ROLE_REFERENCE_CAR:
+  name: 'Список автомобилей'
+  desc: 'Список автомобилей'
+
 
 # Правила
-ROLE_CAR_BRAND_INDEX:
-  name: 'Просмотр'
-  desc: ''
-
-ROLE_CAR_BRAND_NEW:
+ROLE_REFERENCE_CAR_NEW:
   name: 'Добавить'
   desc: ''
 
-ROLE_BRAND_EDIT:
-  name: 'Редактировать'
-  desc: ''
-
-ROLE_BRAND_DELETE:
-  name: 'Удалить'
-  desc: ''
-
-ROLE_BRAND_RENAME:
-  name: 'Переименовать'
-  desc: ''
-
-ROLE_CAR_MODEL:
-  name: 'Каталог моделей'
-  desc: 'Список моделей'
-  header: 'Модели'
-
-ROLE_CAR_MODEL_INDEX:
+ROLE_REFERENCE_CAR_INDEX:
   name: 'Просмотр'
   desc: ''
 
-ROLE_CAR_MODEL_NEW:
-  name: 'Добавить'
-  desc: ''
-
-ROLE_MODEL_EDIT:
+ROLE_REFERENCE_CAR_EDIT:
   name: 'Редактировать'
   desc: ''
 
-ROLE_MODEL_DELETE:
+ROLE_REFERENCE_CAR_DELETE:
   name: 'Удалить'
-  desc: ''
-
-ROLE_MODEL_RENAME:
-  name: 'Переименовать'
-  desc: ''
-
-ROLE_CAR_MODEL_GENERATION:
-  name: 'Каталог поколений'
-  desc: 'Список поколений'
-  header: 'Поколения'
-
-ROLE_CAR_MODEL_GENERATION_INDEX:
-  name: 'Просмотр'
-  desc: ''
-
-ROLE_CAR_MODEL_GENERATION_NEW:
-  name: 'Добавить'
-  desc: ''
-
-ROLE_MODEL_GENERATION_EDIT:
-  name: 'Редактировать'
-  desc: ''
-
-ROLE_MODEL_GENERATION_DELETE:
-  name: 'Удалить'
-  desc: ''
-
-ROLE_MODEL_GENERATION_RENAME:
-  name: 'Переименовать'
-  desc: ''
-
-
-ROLE_CAR_MODEL_PETROL:
-  name: 'Каталог комплектаций'
-  desc: 'Список комплектаций'
-  header: 'Комплектации'
-
-ROLE_CAR_MODEL_PETROL_INDEX:
-  name: 'Просмотр'
-  desc: ''
-
-ROLE_CAR_MODEL_PETROL_NEW:
-  name: 'Добавить'
-  desc: ''
-
-ROLE_MODEL_PETROL_EDIT:
-  name: 'Редактировать'
-  desc: ''
-
-ROLE_MODEL_PETROL_DELETE:
-  name: 'Удалить'
-  desc: ''
-
-ROLE_MODEL_PETROL_RENAME:
-  name: 'Переименовать'
-  desc: ''
-
-ROLE_CAR_MODEL_WHEEL:
-  name: 'Каталог шин'
-  desc: 'Список шин'
-  header: 'Шины'
-
-ROLE_CAR_MODEL_WHEEL_INDEX:
-  name: 'Просмотр'
-  desc: ''
-
-ROLE_CAR_MODEL_WHEEL_NEW:
-  name: 'Добавить'
-  desc: ''
-
-ROLE_MODEL_WHEEL_EDIT:
-  name: 'Редактировать'
-  desc: ''
-
-ROLE_MODEL_WHEEL_DELETE:
-  name: 'Удалить'
-  desc: ''
-
-ROLE_MODEL_WHEEL_RENAME:
-  name: 'Переименовать'
   desc: ''

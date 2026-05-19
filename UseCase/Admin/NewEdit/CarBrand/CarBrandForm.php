@@ -21,14 +21,14 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand;
 
-use BaksDev\Core\Type\Device\Device;
-use BaksDev\Core\Type\Locale\Locale;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\Image\CarBrandImageForm;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\CarBrandName\CarBrandNameForm;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\CallbackTransformer;
-use Symfony\Component\Form\Extension\Core\Type\HiddenType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -36,46 +36,22 @@ final class CarBrandForm extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder->add('local', HiddenType::class);
+        $builder->add('name', CarBrandNameForm::class);
 
-        $builder->get('local')->addModelTransformer(
-            new CallbackTransformer(
-                function($local) {
-                    return $local instanceof Locale ? $local->getLocalValue() : $local;
-                },
-                function($price) {
-                    return new Locale($price);
-                }
-            )
+        $builder->add('image', CarBrandImageForm::class, ['required' => false]);
+
+        /* Сохранить ******************************************************/
+        $builder->add(
+            'car_brand_newedit',
+            SubmitType::class,
+            ['label' => 'Save', 'label_html' => true, 'attr' => ['class' => 'btn-primary']]
         );
-
-
-        $builder->add('device', HiddenType::class);
-
-        $builder->get('device')->addModelTransformer(
-            new CallbackTransformer(
-                function($device) {
-                    return $device instanceof Device ? $device->getDevice() : $device;
-                },
-                function($device) {
-                    return new Device($device);
-                }
-            )
-        );
-
-        $builder->add('preview', TextareaType::class, ['required' => false]);
-
-        $builder->add('description', TextareaType::class, ['required' => false]);
     }
 
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(
-            [
-                'data_class' => ProductDescriptionDTO::class,
-            ]
-        );
+        $resolver->setDefaults(['data_class' => CarBrandDTO::class]);
     }
 
 }

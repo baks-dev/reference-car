@@ -21,11 +21,14 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand;
 
 use BaksDev\Core\Entity\AbstractHandler;
 use BaksDev\Reference\Car\Entity\CarBrand\CarBrand;
-use BaksDev\Reference\Car\Messenger\Upload\CarBrand\CarBrandMessage;
+use BaksDev\Reference\Car\Entity\CarBrand\Image\CarBrandImage;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\Image\CarBrandImageDTO;
 
 final class CarBrandHandler extends AbstractHandler
 {
@@ -33,7 +36,32 @@ final class CarBrandHandler extends AbstractHandler
     {
         $this->setCommand($command);
 
-        $carBrand = $this->prePersistOrUpdate(CarBrand::class, ['id' => $command->getId()]);
+        $CarBrand = $this->prePersistOrUpdate(CarBrand::class, ['id' => $command->getId()]);
+
+
+        /**
+         * Загружаем изображение (если есть)
+         *
+         * @var CarBrand $CarBrand
+         * @var CarBrandImage $image
+         */
+        $image = $CarBrand->getUploadImage();
+
+        if(false === empty($image))
+        {
+            $CarBrandImageDTO = $image->getEntityDto();
+
+
+            /** @var CarBrandImageDTO|false $CarBrandImageDTO */
+            if(
+                false !== $CarBrandImageDTO
+                && false === empty($CarBrandImageDTO->getFile())
+            )
+            {
+                $this->imageUpload->upload($CarBrandImageDTO->getFile(), $image);
+            }
+        }
+
 
         /** Валидация всех объектов */
         if($this->validatorCollection->isInvalid())
@@ -41,14 +69,11 @@ final class CarBrandHandler extends AbstractHandler
             return $this->validatorCollection->getErrorUniqid();
         }
 
+
         $this->flush();
 
-        $this->messageDispatch->dispatch(
-            message: new CarBrandMessage($command->getId()),
-            transport: 'reference-car',
-        );
+        $this->messageDispatch->addClearCacheOther('reference-car');
 
-
-        return $carBrand;
+        return $CarBrand;
     }
 }

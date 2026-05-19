@@ -29,7 +29,6 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
 final readonly class CarModelsCollection
 {
-
     public function __construct(
         #[AutowireIterator('baks.car.models', defaultPriorityMethod: 'sort')] private iterable $models,
     ) {}

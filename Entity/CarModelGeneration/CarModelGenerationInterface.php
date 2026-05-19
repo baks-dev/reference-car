@@ -21,8 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarModelGeneration;
 
-interface CarModelGenerationInterface
-{
-}
+interface CarModelGenerationInterface {}

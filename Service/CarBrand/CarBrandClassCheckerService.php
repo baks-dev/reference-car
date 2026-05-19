@@ -27,63 +27,36 @@ namespace BaksDev\Reference\Car\Service\CarBrand;
 
 use BaksDev\Reference\Car\BaksDevReferenceCarBundle;
 use BaksDev\Reference\Car\Generator\CarBrand\CarBrandClassTemplate;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\Filesystem\Filesystem;
 
-class CarBrandClassCheckerService
+final class CarBrandClassCheckerService
 {
-    private const NAMESPACE = [
-        "Type",
-        "CarBrands",
-        "Id",
-        "Brands",
-        "Collection",
-    ];
-
-    private string $collectionPath;
-
-    private string $brandFullNamespace;
-
-    public function __construct(
-        #[Target('referenceCarLogger')] private LoggerInterface $logger,
-    )
-    {
-        $this->collectionPath = implode(DIRECTORY_SEPARATOR, [
-            rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
-            implode(DIRECTORY_SEPARATOR, self::NAMESPACE),
-        ]);
-        $this->brandFullNamespace = implode('\\', [
-            rtrim(BaksDevReferenceCarBundle::NAMESPACE, '\\'),
-            ...self::NAMESPACE]);
-    }
-
     /**
-     * Проверяет есть ли основной класс бренда
+     * Проверяет, существует ли класс бренда
      */
-    public function checkBrand($data): void
+    public function checkBrand(CarBrandClassCheckerDTO $data): void
     {
-        echo 'Проверка наличия основного класса : '.$data->getTitle().PHP_EOL;
+        echo 'Проверка наличия класса : '.$data->getTitle().PHP_EOL;
 
-        // Создаем полный физ путь для создания или проверки наличия папки
+        $shortNamespace = str_replace(BaksDevReferenceCarBundle::NAMESPACE, '', $data->getNamespace());
         $collectionPath = implode(DIRECTORY_SEPARATOR, [
-            $this->collectionPath,
+            rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
+            str_replace('\\', DIRECTORY_SEPARATOR, $shortNamespace),
         ]);
 
-        // Если папки нет, то создаем
-        if(!is_dir($collectionPath))
+
+        // Если папки для сохранения файла нет, то создаем
+        if(false === is_dir($collectionPath))
         {
-            echo 'Папки для основного класса бренда: '.$data->getTitle().' нет. Создаем папку'.PHP_EOL;
+            echo 'Папки для класса бренда: '.$data->getTitle().' нет. Создаем папку'.PHP_EOL;
             mkdir($collectionPath, 0755, true);
         }
 
-        // Составляем полный namespace для основного класса бренда
-        $brandFullNamespace = implode('\\', [
-            $this->brandFullNamespace,
-            $data->getClassName(),
-        ]);
 
-        if(!class_exists($brandFullNamespace))
+        // Составляем полный namespace для класса бренда
+        $brandFullNamespace = $data->getNamespace().$data->getClassName();
+
+        if(false === class_exists($brandFullNamespace))
         {
             echo 'Класс для основного класса бренда: '.$data->getTitle().' отсутствует. Создаем класс'.PHP_EOL;
             $this->generateClass($data, $collectionPath, $brandFullNamespace);
@@ -94,23 +67,27 @@ class CarBrandClassCheckerService
         }
     }
 
+
     /**
      * Генерирует класс
-     *
-     * @param $data
-     *
-     * @return void
      */
-    public function generateClass($data, $collectionPath, $brandFullNamespace): void
+    public function generateClass(
+        CarBrandClassCheckerDTO $data,
+        string $collectionPath,
+        string $brandFullNamespace
+    ): void
     {
         $filesystem = new Filesystem();
         $filePath = $collectionPath.'/'.$data->getClassName().'.php';
 
+
         // Получает сгенерированное содержание класса
         $classContent = CarBrandClassTemplate::getTemplate($data);
 
+
         // Создает класс с сгенерированным содержанием
-        $filesystem->dumpFile($collectionPath.'/'.$data->getClassName().'.php', $classContent);
+        $filesystem->dumpFile($filePath, $classContent);
+
 
         // Скидываем кеш после создания класса
         clearstatcache(true, $filePath);
@@ -119,11 +96,13 @@ class CarBrandClassCheckerService
             opcache_invalidate($filePath, true);
         }
 
-        //Явно загружаем класс
+
+        // Явно загружаем класс
         if(!class_exists($brandFullNamespace, false))
         {
             include $filePath;
         }
+
 
         echo 'Основной класс для '.$data->getTitle().' создан'.PHP_EOL;
     }

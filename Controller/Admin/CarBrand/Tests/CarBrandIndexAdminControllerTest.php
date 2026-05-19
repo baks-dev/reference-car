@@ -25,23 +25,28 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Controller\Admin\CarBrand\Tests;
 
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\Tests\CarBrandNewAdminUseCaseTest;
 use BaksDev\Users\User\Tests\TestUserAccount;
+use PHPUnit\Framework\Attributes\DependsOnClass;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- */
 #[When(env: 'test')]
+#[Group('reference-car')]
+#[Group('reference-car-controller')]
 final class CarBrandIndexAdminControllerTest extends WebTestCase
 {
     private const string URL = '/admin/car-brands';
-    private const string ROLE = 'ROLE_CAR_BRAND_INDEX';
+    private const string ROLE = 'ROLE_REFERENCE_CAR_INDEX';
 
-    /** Доступ по роли ROLE_CAR_BRAND_INDEX */
+
+    /** Доступ по роли ROLE_REFERENCE_CAR_INDEX */
+    #[DependsOnClass(CarBrandNewAdminUseCaseTest::class)]
     public function testRoleSuccessful(): void
     {
-        $client = static::createClient();
+        self::ensureKernelShutdown();
+        $client = self::createClient();
 
         $usr = TestUserAccount::getModer(self::ROLE);
 
@@ -52,10 +57,13 @@ final class CarBrandIndexAdminControllerTest extends WebTestCase
 
     }
 
+
     /** Доступ по роли ROLE_ADMIN */
+    #[DependsOnClass(CarBrandNewAdminUseCaseTest::class)]
     public function testRoleAdminSuccessful(): void
     {
-        $client = static::createClient();
+        self::ensureKernelShutdown();
+        $client = self::createClient();
 
         $usr = TestUserAccount::getAdmin();
 
@@ -65,10 +73,13 @@ final class CarBrandIndexAdminControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
     }
 
+
     /** Доступ по роли ROLE_USER */
+    #[DependsOnClass(CarBrandNewAdminUseCaseTest::class)]
     public function testRoleUserFiled(): void
     {
-        $client = static::createClient();
+        self::ensureKernelShutdown();
+        $client = self::createClient();
 
         $usr = TestUserAccount::getUsr();
         $client->loginUser($usr, 'user');
@@ -77,12 +88,15 @@ final class CarBrandIndexAdminControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+
     /** Доступ по без роли */
+    #[DependsOnClass(CarBrandNewAdminUseCaseTest::class)]
     public function testGuestFiled(): void
     {
         self::ensureKernelShutdown();
-        $client = static::createClient();
+        $client = self::createClient();
         $client->request('GET', self::URL);
+
 
         // Full authentication is required to access this resource
         self::assertResponseStatusCodeSame(401);

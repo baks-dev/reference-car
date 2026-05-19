@@ -1,0 +1,7 @@
+page:
+  index: 'Каталог авто'
+  petrol:
+    show: 'Комплектация'
+
+breadcrumb:
+  index: 'Каталог авто'

@@ -21,12 +21,15 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration;
 
 use BaksDev\Reference\Car\Entity\CarModelGeneration\CarModelGenerationInterface;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\CarModelGenerationName\CarModelGenerationNameDTO;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\Image\CarModelGenerationImageDTO;
 use Symfony\Component\Validator\Constraints as Assert;
 
 final class CarModelGenerationDTO implements CarModelGenerationInterface
@@ -38,13 +41,21 @@ final class CarModelGenerationDTO implements CarModelGenerationInterface
     #[Assert\Valid]
     private CarModelGenerationNameDTO $name;
 
+
+    /** Обложка поколения */
+    #[Assert\Valid]
+    public ?CarModelGenerationImageDTO $image = null;
+
+
     #[Assert\NotBlank]
     #[Assert\Uuid]
     private CarModelUid $model;
 
     public function __construct()
     {
+        $this->id = new CarModelGenerationUid();
         $this->name = new CarModelGenerationNameDTO();
+        $this->image = new CarModelGenerationImageDTO();
     }
 
     public function getId(): CarModelGenerationUid
@@ -70,5 +81,19 @@ final class CarModelGenerationDTO implements CarModelGenerationInterface
     public function setModel(CarModelUid $model): void
     {
         $this->model = $model;
+    }
+
+
+    /** Обложка поколения */
+
+    public function getImage(): ?CarModelGenerationImageDTO
+    {
+        return $this->image;
+    }
+
+    public function setImage(?CarModelGenerationImageDTO $image): self
+    {
+        $this->image = $image;
+        return $this;
     }
 }

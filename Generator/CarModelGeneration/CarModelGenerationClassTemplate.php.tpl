@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright 2025.  Baks.dev <admin@baks.dev>
+ *  Copyright 2026.  Baks.dev <admin@baks.dev>
 *
 *  Permission is hereby granted, free of charge, to any person obtaining a copy
 *  of this software and associated documentation files (the "Software"), to deal
@@ -23,38 +23,78 @@
 
 declare(strict_types=1);
 
-namespace BaksDev\Reference\Car\Type\CarModelGenerations\Id\ModelGenerations\Collection;
+namespace {{namespace}};
 
-use BaksDev\Reference\Car\Type\CarModelGenerations\Id\ModelGenerations\CarModelGenerationsInterface;
+use BaksDev\Reference\Car\Type\CarModelGenerations\ModelGenerations\CarModelGenerationsInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use {{modelNamespace}} as Model;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
+use BaksDev\Reference\Car\Type\CarModelGenerations\Name\CarModelGenerationName;
 
 #[AutoconfigureTag('baks.car.generations')]
 final class {{className}} implements CarModelGenerationsInterface
 {
-/** Uid (ID) поколения */
-public const CAR_GENERATION_UID = '{{uid}}';
+    /** Uid (ID) поколения */
+    public const string CAR_GENERATION_UID = '{{uid}}';
 
-/** Uid (ID) модели */
-public const string CAR_MODEL_UID = Model::CAR_MODEL_UID;
 
-public static function getUid(): CarModelGenerationUid
-{
-return new CarModelGenerationUid(self::CAR_GENERATION_UID);
-}
+    /** Значение названия поколения */
+    public const string CAR_GENERATION_VALUE = '{{title}}';
 
-/**
-* Возвращает UID привязанной модели
-*/
-public static function getModelUid(): CarModelUid
-{
-return new CarModelUid(self::CAR_MODEL_UID);
-}
 
-public static function sort(): int
-{
-return 2;
-}
-}
+    /** @var string[] Список для фильтрации */
+    public const array HAYSTACK = [self::CAR_GENERATION_VALUE, self::CAR_GENERATION_UID];
+
+
+    /** Uid (ID) модели */
+    public const string CAR_MODEL_UID = Model::CAR_MODEL_UID;
+
+
+    /**
+    * Возвращает UID поколения
+    */
+    public static function getUid(): CarModelGenerationUid
+    {
+        return new CarModelGenerationUid(self::CAR_GENERATION_UID);
+    }
+
+
+    /**
+    * Возвращает значение (value)
+    */
+    public static function getValue(): CarModelGenerationName
+    {
+        return new CarModelGenerationName(self::CAR_GENERATION_VALUE);
+    }
+
+
+    /**
+    * Возвращает UID привязанной модели
+    */
+    public static function getModelUid(): CarModelUid
+    {
+        return new CarModelUid(self::CAR_MODEL_UID);
+    }
+
+
+    public static function equals(mixed $value): bool
+    {
+        if (is_object($value) && method_exists($value, '__toString'))
+        {
+            $value = (string)$value;
+        }
+
+        if (is_string($value))
+        {
+            return array_any(self::HAYSTACK, static fn($item) => (mb_strtolower($value) === mb_strtolower($item)));
+        }
+
+        return false;
+    }
+
+    public static function sort(): int
+        {
+            return 2;
+        }
+    }

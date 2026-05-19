@@ -27,100 +27,69 @@ namespace BaksDev\Reference\Car\Service\CarModelGeneration;
 
 use BaksDev\Reference\Car\BaksDevReferenceCarBundle;
 use BaksDev\Reference\Car\Generator\CarModelGeneration\CarModelGenerationClassTemplate;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\Filesystem\Filesystem;
 
-class CarModelGenerationClassCheckerService
+final class CarModelGenerationClassCheckerService
 {
-    private LoggerInterface $logger;
-
-    private const NAMESPACE = [
-        "Type",
-        "CarModelGenerations",
-        "Id",
-        "ModelGenerations",
-        "Collection",
-    ];
-
-    private string $collectionPath;
-
-    private string $modelGenerationFullNamespace;
-
-    public function __construct(
-        #[Target('referenceCarLogger')] LoggerInterface $logger,
-    )
-    {
-        $this->logger = $logger;
-        $this->collectionPath = implode(DIRECTORY_SEPARATOR, [
-            rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
-            implode(DIRECTORY_SEPARATOR, self::NAMESPACE),
-        ]);
-        $this->modelGenerationFullNamespace = implode('\\', [
-            rtrim(BaksDevReferenceCarBundle::NAMESPACE, '\\'),
-            ...self::NAMESPACE]);
-    }
-
     /**
-     * Проверяет есть ли класс
+     * Проверяет есть ли класс поколения
      */
-    public function checkModelGeneration($data): void
+    public function checkModelGeneration(CarModelGenerationClassCheckerDTO $data): void
     {
-        $this->logger->info('Проверка наличия основного класса : '.$data->getTitle());
-        echo 'Проверка наличия основного класса : '.$data->getNamespace().PHP_EOL;
+        echo 'Проверка наличия основного класса поколения: '.$data->getClassName().PHP_EOL;
+
+        $shortNamespace = str_replace(BaksDevReferenceCarBundle::NAMESPACE, '', $data->getNamespace());
+        $collectionPath = implode(DIRECTORY_SEPARATOR, [
+            rtrim(BaksDevReferenceCarBundle::PATH, DIRECTORY_SEPARATOR),
+            str_replace('\\', DIRECTORY_SEPARATOR, $shortNamespace),
+        ]);
+
+
+        // Если папки нет, то создаем
+        if(false === is_dir($collectionPath))
+        {
+            echo 'Папки для основного класса поколения: '.$data->getTitle().' нет. Создаем папку';
+            mkdir($collectionPath, 0755, true);
+        }
+
 
         /**
-         * Проверяем равно ли значение названия класса модели и поколения
-         * Если равны, то поколения нет и его не генерируем
+         * Создаем полный namespace для класса модели
          */
-        $isGeneration = $data->getModel()['class_name'] === $data->getClassName() ? false : true;
+        $modelGenerationFullNamespace = $data->getNamespace().$data->getClassName();
 
-        if($isGeneration === true)
+        if(false === class_exists($modelGenerationFullNamespace))
         {
-            // Создаем полный физ путь для создания или проверки наличия папки
-            $collectionPath = $this->collectionPath;
-
-            // Если папки нет, то создаем
-            if(!is_dir($collectionPath))
-            {
-                $this->logger->info('Папки для основного класса поколения: '.$data->getTitle().' нет. Создаем папку');
-                mkdir($collectionPath, 0755, true);
-            }
-
-            $modelGenerationFullNamespace = implode('\\', [
-                $this->modelGenerationFullNamespace,
-                $data->getClassName(),
-            ]);
-
-            if(!class_exists($modelGenerationFullNamespace))
-            {
-                $this->logger->info('Класс для основного класса поколения: '.$data->getTitle().' отсутствует. Создаем класс');
-                $this->generateClass($data, $collectionPath, $modelGenerationFullNamespace);
-            }
-            else
-            {
-                $this->logger->info('Основной класс поколения: '.$modelGenerationFullNamespace.' существует.');
-            }
+            echo 'Класс для основного класса поколения: '.$data->getTitle().' отсутствует. Создаем класс'.PHP_EOL;
+            $this->generateClass($data, $collectionPath, $modelGenerationFullNamespace);
+        }
+        else
+        {
+            echo 'Основной класс поколения: '.$modelGenerationFullNamespace.' существует.'.PHP_EOL;
         }
     }
 
+
     /**
      * Генерирует класс
-     *
-     * @param $data
-     *
-     * @return void
      */
-    public function generateClass($data, $collectionPath, $modelGenerationFullNamespace): void
+    public function generateClass(
+        CarModelGenerationClassCheckerDTO $data,
+        string $collectionPath,
+        string $modelGenerationFullNamespace
+    ): void
     {
         $filesystem = new Filesystem();
         $filePath = $collectionPath.'/'.$data->getClassName().'.php';
 
+
         // Получает сгенерированное содержание класса
         $classContent = CarModelGenerationClassTemplate::getTemplate($data);
 
+
         // Создает класс с сгенерированным содержанием
-        $filesystem->dumpFile($collectionPath.'/'.$data->getClassName().'.php', $classContent);
+        $filesystem->dumpFile($filePath, $classContent);
+
 
         // Скидываем кеш после создания класса
         clearstatcache(true, $filePath);
@@ -129,12 +98,14 @@ class CarModelGenerationClassCheckerService
             opcache_invalidate($filePath, true);
         }
 
-        //Явно загружаем класс
+
+        // Явно загружаем класс
         if(!class_exists($modelGenerationFullNamespace, false))
         {
             include $filePath;
         }
 
-        $this->logger->info('Основной класс для '.$data->getTitle().' создан');
+
+        echo 'Основной класс для '.$data->getTitle().' создан'.PHP_EOL;
     }
 }

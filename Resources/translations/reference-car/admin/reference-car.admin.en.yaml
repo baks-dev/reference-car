@@ -1,36 +1,34 @@
 page:
-  index: 'Product Catalog'
-  new: 'Add product'
-  edit: 'Edit product'
-  rename: 'Rename the product'
-  delete: 'Delete products'
+  brand:
+    index: 'Brands list'
+    show: 'Brand'
+    new: 'Add brand'
+    edit: 'Edit brand'
+    delete: 'Delete brand'
+  model:
+    index: 'Models list'
+    show: 'Model'
+  generation:
+    index: 'Generations list'
+    edit: 'Edit generation'
+    show: 'Generation'
+  petrol:
+    index: 'Petrol list'
+    show: 'Petrol'
+
 
 breadcrumb:
-  index: 'Product Catalog'
-  new: 'Add product'
-  edit: 'Edit product'
-  rename: 'Rename the product'
-  delete: 'Delete a product'
-
-
-form:
-  label:
-    trans:
-      name: 'Product name'
-    url: 'Product symbol code'
+  index: 'List of cars'
 
 success:
-  new: 'Product added successfully'
-  update: 'Product updated successfully'
-  edit: 'Product updated successfully'
-  rename: 'Product successfully renamed'
-  delete: 'Product successfully removed to cart'
-  restore: 'The product was successfully restored'
+  brand:
+    new: 'Brand added successfully'
+    edit: 'Brand updated successfully'
+    delete: 'Brand removed successfully'
+  generation:
+    edit: 'Generation updated successfully'
 
 danger:
-  new: '%s: Error adding product'
-  update: '%s: Error updating product'
-  edit: '%s: Error while updating product'
-  rename: '%s: Error updating product'
-  delete: '%s: Error deleting product'
-  restore: '%s: Error while restoring product'
+  new: '%s: Error adding brand'
+  edit: '%s: Error while updating brand'
+  delete: '%s: Error deleting brand'

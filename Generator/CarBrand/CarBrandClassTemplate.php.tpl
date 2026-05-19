@@ -1,6 +1,6 @@
 <?php
 /*
- *  Copyright 2025.  Baks.dev <admin@baks.dev>
+ *  Copyright 2026.  Baks.dev <admin@baks.dev>
 *
 *  Permission is hereby granted, free of charge, to any person obtaining a copy
 *  of this software and associated documentation files (the "Software"), to deal
@@ -23,25 +23,55 @@
 
 declare(strict_types=1);
 
-namespace BaksDev\Reference\Car\Type\CarBrands\Id\Brands\Collection;
+namespace {{namespace}};
 
-use BaksDev\Reference\Car\Type\CarBrands\Id\Brands\CarBrandsInterface;
+use BaksDev\Reference\Car\Type\CarBrands\Brands\CarBrandsInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
+use BaksDev\Reference\Car\Type\CarBrands\Name\CarBrandName;
 
 #[AutoconfigureTag('baks.car.brands')]
 final class {{className}} implements CarBrandsInterface
 {
-/** Uid (ID) бренда */
-public const string CAR_BRAND_UID = '{{uid}}';
+    /** Uid (ID) бренда */
+    public const string CAR_BRAND_UID = '{{uid}}';
 
-public static function getUid(): CarBrandUid
-{
-return new CarBrandUid(self::CAR_BRAND_UID);
-}
 
-public static function sort(): int
-{
-return 2;
-}
+    /** Значение названия бренда */
+    public const string CAR_BRAND_VALUE = '{{brandTitle}}';
+
+
+    /** @var string[] Список для фильтрации */
+    public const array HAYSTACK = [self::CAR_BRAND_VALUE, self::CAR_BRAND_UID];
+
+
+    public static function getUid(): CarBrandUid
+    {
+        return new CarBrandUid(self::CAR_BRAND_UID);
+    }
+
+    public static function getValue(): CarBrandName
+    {
+        return new CarBrandName(self::CAR_BRAND_VALUE);
+    }
+
+    public static function equals(mixed $value): bool
+    {
+        if (is_object($value) && method_exists($value, '__toString'))
+        {
+            $value = (string)$value;
+        }
+
+        if (is_string($value))
+        {
+            return array_any(self::HAYSTACK, static fn($item) => mb_strtolower($value) === mb_strtolower($item));
+        }
+
+        return false;
+    }
+
+    public static function sort(): int
+    {
+        return 2;
+    }
 }

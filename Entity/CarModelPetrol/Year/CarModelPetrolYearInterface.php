@@ -21,8 +21,9 @@
  *  THE SOFTWARE.
  */
 
-namespace BaksDev\Reference\Car\Entity\CarModelPetrol\Year;
+declare(strict_types=1);
 
+namespace BaksDev\Reference\Car\Entity\CarModelPetrol\Year;
 
 use BaksDev\Reference\Car\Type\CarModelPetrols\Year\CarModelPetrolYear;
 
@@ -30,5 +31,4 @@ interface CarModelPetrolYearInterface
 {
     /** Возвращает название CarModelPetrolYear */
     public function getValue(): ?CarModelPetrolYear;
-
 }

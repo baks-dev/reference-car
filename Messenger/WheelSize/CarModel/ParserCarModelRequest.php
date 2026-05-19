@@ -25,89 +25,104 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Messenger\WheelSize\CarModel;
 
+use BaksDev\Core\Deduplicator\DeduplicatorInterface;
+use BaksDev\Reference\Car\Command\Parser\RunParserWheelSizeCommand;
 use BaksDev\Reference\Car\Messenger\WheelSize\WheelSize;
 use DateInterval;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
+use Facebook\WebDriver\Exception\TimeoutException;
 
+#[Autoconfigure(shared: false)]
 final class ParserCarModelRequest extends WheelSize
 {
-    /* Протокол и домен парсинга */
-    private const WHEEL_SIZE_URI = 'https://www.wheel-size.com';
-
     /* Задержка между запросами в секундах */
-    private const REQUEST_DELAY = 4;
+    private const int REQUEST_DELAY = 4;
+
 
     public function __construct(
-        #[Target('referenceCarLogger')] private LoggerInterface $logger,
-        private CacheInterface $cache,
-    )
-    {
-        $this->cache = $cache;
-    }
+        #[Target('referenceCarLogger')] private readonly LoggerInterface $logger,
+        private readonly DeduplicatorInterface $Deduplicator,
+        private readonly CacheInterface $cache,
+    ) {}
+
 
     /**
      * Получает HTML-контент по указанному URL.
      *
      * @param string $url URL для запроса
      *
-     * @return string|false HTML-контент или null при ошибке
+     * @return string|false HTML-контент или false при ошибке
      */
     public function fetchHtml(string $url): string|false
     {
         $cacheKey = md5('parser_request_'.$url);
-        $url = str_starts_with($url, 'http') ? $url : self::WHEEL_SIZE_URI.$url;
+        $url = str_starts_with($url, 'http') ? $url : RunParserWheelSizeCommand::WHEEL_SIZE_URL.$url;
+
 
         /**
-         * Получает HTML из кеша,
-         * либо получает html из запроса
+         * Получает HTML из кеша, либо получает html из запроса
          *
          * В случае false сохраняет в кеш на 1 сек, иначе кладет html в кеш на 1 неделю
          *
          * @return string|false HTML-контент или null при ошибке
          */
-        $html = $this->cache->get($cacheKey, function(ItemInterface $item) use ($url): string|false {
+        return $this->cache->get($cacheKey, function(ItemInterface $item) use ($url): string|false {
+
+            $item->expiresAfter(DateInterval::createFromDateString('1 second'));
 
             $client = $this->createClient();
-            echo 'ParserModelRequest.php Создали клиент для '.$url.PHP_EOL;
+            echo 'ParserCarModelRequest.php Создали клиент для '.$url.PHP_EOL;
 
-            $item->expiresAfter(1);
             sleep(self::REQUEST_DELAY);
 
             $this->logger->info('Выполняем запрос на '.$url);
+
+
+            /**
+             * Создаем дедупликатор для капчи, чтобы временно повторно не отправлять запросы на сайт во избежание
+             * блокировки по IP
+             */
+            $Deduplicator = $this->Deduplicator
+                ->namespace('reference-car')
+                ->expiresAfter(DateInterval::createFromDateString('10 minute'))
+                ->deduplication(['captcha', md5(self::class)]);
+
+            if($Deduplicator->isExecuted())
+            {
+                return false;
+            }
+
             $response = $client->request('GET', $url);
 
-            $client->waitFor('.col-md-12.col-sm-12.col-lg-8 .mb-4');
+            try
+            {
+                $client->waitFor('.col-md-12.col-sm-12.col-lg-8 .mb-4');
+            }
+            catch(TimeoutException)
+            {
+                $this->logger->critical('Превышен лимит запросов к серверу', [$url, self::class.':'.__LINE__]);
+                $Deduplicator->save();
+                return false;
+            }
 
             $content = $client->getPageSource();
 
-            if(isset($client))
-            {
-                echo 'ParserModelRequest.php 1Закрыли клиент для '.$url.PHP_EOL;
-                $client->quit();
-            }
+            echo 'ParserModelRequest.php Закрыли клиент для '.$url.PHP_EOL;
+            $client->quit();
 
-            if(empty($content)/* || $response->getStatusCode() !== 200*/)
+            if(empty($content))
             {
-                $this->logger->error('Ошибка запроса на '.$url.' статус ответа: '/*.$response->getStatusCode()*/);
-
+                $this->logger->error('Ошибка запроса на '.$url.' статус ответа: '.$response->getStatusCode());
                 return false;
             }
 
             $item->expiresAfter(DateInterval::createFromDateString('1 week'));
 
-            return $content ?: false;
+            return $content;
         });
-
-        if(false === $html)
-        {
-            $this->logger->info('HTML с '.$url.' не получен');
-
-            return false;
-        }
-
-        return $html;
     }
 }

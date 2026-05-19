@@ -1,5 +1,4 @@
 <?php
-
 /*
  *  Copyright 2025.  Baks.dev <admin@baks.dev>
  *
@@ -22,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types = 1);
+
 namespace BaksDev\Reference\Car\Entity\CarModelPetrol\HP;
 
 use BaksDev\Core\Entity\EntityState;
@@ -29,8 +30,7 @@ use BaksDev\Reference\Car\Entity\CarModelPetrol\CarModelPetrol;
 use BaksDev\Reference\Car\Type\CarModelPetrols\HP\CarModelPetrolHP as HPField;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
-
-/* CarModelPetrolHP */
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'car_model_petrol_hp')]

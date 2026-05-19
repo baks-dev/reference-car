@@ -1,0 +1,8 @@
+page:
+  index: 'Cars catalog'
+  petrol:
+    show: 'Petrol'
+
+
+breadcrumb:
+  index: 'Каталог авто'

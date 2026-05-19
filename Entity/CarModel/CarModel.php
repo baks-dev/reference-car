@@ -1,5 +1,4 @@
 <?php
-
 /*
  *  Copyright 2025.  Baks.dev <admin@baks.dev>
  *
@@ -22,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarModel;
 
 use BaksDev\Core\Entity\EntityState;
@@ -31,8 +32,6 @@ use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 use Symfony\Component\Validator\Constraints as Assert;
-
-/* Brand */
 
 #[ORM\Entity]
 #[ORM\Table(name: 'car_model')]

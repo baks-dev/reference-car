@@ -23,57 +23,138 @@
 
 declare(strict_types=1);
 
-namespace BaksDev\Reference\Car\Type\CarModelPetrols\Id\ModelPetrols\Collection\{{modelClassName}}\{{petrolClassName}};
+namespace {{namespace}};
 
-use BaksDev\Reference\Car\Type\CarModelPetrols\Id\ModelPetrols\CarModelPetrolInterface;
+use BaksDev\Reference\Car\Type\CarModelPetrols\ModelPetrols\CarModelPetrolInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Id\CarModelPetrolUid;
-use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
-use BaksDev\Reference\Car\Type\CarModels\Id\Models\Collection\{{modelClassName}} as Model;
-{{useCarModelGenerationFullNamespace}}
+use {{generationNamespace}} as Generation;
+use BaksDev\Reference\Car\Type\CarModelPetrols\HP\CarModelPetrolHP;
+use BaksDev\Reference\Car\Type\CarModelPetrols\KW\CarModelPetrolKW;
+use BaksDev\Reference\Car\Type\CarModelPetrols\Name\CarModelPetrolName;
+use BaksDev\Reference\Car\Type\CarModelPetrols\PS\CarModelPetrolPS;
+use BaksDev\Reference\Car\Type\CarModelPetrols\Year\CarModelPetrolYear;
 
 #[AutoconfigureTag('baks.car.model.petrols')]
-final class ModelPetrol implements CarModelPetrolInterface
+final class {{className}} implements CarModelPetrolInterface
 {
-/** Uid (ID) комплектации */
-public const string CAR_MODEL_PETROL_UID = '{{uid}}';
+    /** Uid (ID) комплектации */
+    public const string CAR_MODEL_PETROL_UID = '{{uid}}';
 
-/** Uid (ID) модели */
-public const string CAR_MODEL_UID = Model::CAR_MODEL_UID;
 
-/** Uid (ID) поколения */
-public const string CAR_MODEL_GENERATION_UID = CarModelGeneration::CAR_GENERATION_UID;
+    /** Значение названия комплектации */
+    public const string CAR_MODEL_PETROL_VALUE = '{{petrol}}';
 
-/**
-* Возвращает UID комплектации
-*/
-public static function getUid(): CarModelPetrolUid
-{
-return new CarModelPetrolUid(self::CAR_MODEL_PETROL_UID);
-}
 
-/**
-* Возвращает UID привязанной модели
-*/
-public static function getModelUid(): CarModelUid
-{
-return new CarModelUid(self::CAR_MODEL_UID);
-}
+    /** Значение HP */
+    public const string CAR_HP_VALUE = '{{HP}}';
 
-/**
-* Возвращает UID привязанного поколения
-*/
-public static function getModelGenerationUid(): CarModelGenerationUid
-{
-return new CarModelGenerationUid(self::CAR_MODEL_GENERATION_UID);
-}
 
-/**
-* Сортировка (чем меньше число - тем первым в итерации будет значение)
-*/
-public static function sort(): int
-{
-return 2;
-}
+    /** Значение KW */
+    public const string CAR_KW_VALUE = '{{KW}}';
+
+
+    /** Значение PS */
+    public const string CAR_PS_VALUE = '{{PS}}';
+
+
+    /** Значение Year */
+    public const string CAR_YEAR_VALUE = '{{year}}';
+
+
+    /** @var string[] Список для фильтрации */
+    public const array HAYSTACK = [self::CAR_MODEL_PETROL_VALUE, self::CAR_MODEL_PETROL_UID];
+
+
+    /** Uid (ID) поколения */
+    public const string CAR_MODEL_GENERATION_UID = Generation::CAR_GENERATION_UID;
+
+
+    /**
+    * Возвращает UID комплектации
+    */
+    public static function getUid(): CarModelPetrolUid
+    {
+        return new CarModelPetrolUid(self::CAR_MODEL_PETROL_UID);
+    }
+
+
+    /**
+    * Возвращает значение (value) HP
+    */
+    public static function getHPValue(): CarModelPetrolHP
+    {
+        return new CarModelPetrolHP(self::CAR_HP_VALUE);
+    }
+
+
+    /**
+    * Возвращает значение (value) KW
+    */
+    public static function getKWValue(): CarModelPetrolKW
+    {
+        return new CarModelPetrolKW(self::CAR_KW_VALUE);
+    }
+
+
+    /**
+    * Возвращает значение названия комплектации
+    */
+    public static function getNameValue(): CarModelPetrolName
+    {
+        return new CarModelPetrolName(self::CAR_MODEL_PETROL_VALUE);
+    }
+
+
+    /**
+    * Возвращает значение (value) PS
+    */
+    public static function getPSValue(): CarModelPetrolPS
+    {
+        return new CarModelPetrolPS(self::CAR_PS_VALUE);
+    }
+
+
+    /**
+    * Возвращает значение (value) PetrolYear
+    */
+    public static function getPetrolYearValue(): CarModelPetrolYear
+    {
+        return new CarModelPetrolYear(self::CAR_YEAR_VALUE);
+    }
+
+
+    /**
+    * Возвращает UID привязанного поколения
+    */
+    public static function getModelGenerationUid(): CarModelGenerationUid
+    {
+        return new CarModelGenerationUid(self::CAR_MODEL_GENERATION_UID);
+    }
+
+
+    public static function equals(mixed $value): bool
+    {
+        if (is_object($value) && method_exists($value, '__toString'))
+        {
+            $value = (string)$value;
+        }
+
+        if (is_string($value))
+        {
+            return array_any(self::HAYSTACK, static fn($item) => (mb_strtolower($value) === mb_strtolower($item)));
+        }
+
+        return false;
+    }
+
+
+    /**
+    * Сортировка (чем меньше число - тем первым в итерации будет значение)
+    */
+    public static function sort(): int
+    {
+        return 2;
+    }
 }

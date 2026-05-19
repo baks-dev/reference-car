@@ -21,9 +21,13 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Controller\Admin\CarModelGenerations;
 
 use BaksDev\Core\Controller\AbstractController;
+use BaksDev\Core\Form\Search\SearchDTO;
+use BaksDev\Core\Form\Search\SearchForm;
 use BaksDev\Core\Listeners\Event\Security\RoleSecurity;
 use BaksDev\Reference\Car\Repository\AllCarModelGenerations\AllCarModelGenerationsInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -33,10 +37,14 @@ use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[AsController]
-#[RoleSecurity(['ROLE_CAR_MODEL_GENERATION', 'ROLE_CAR_MODEL_GENERATION_INDEX'])]
+#[RoleSecurity(['ROLE_CAR_MODEL_GENERATION_INDEX'])]
 final class IndexController extends AbstractController
 {
-    #[Route('/admin/car-model-generations/{page<\d+>}', name: 'car-model-generations.admin.index', methods: ['GET', 'POST'])]
+    #[Route(
+        '/admin/car-model-generations/{page<\d+>}',
+        name: 'admin.car-model-generations.index',
+        methods: ['GET', 'POST'])
+    ]
     public function index(
         Request $request,
         #[Autowire(service: AllCarModelGenerationsInterface::class)]
@@ -44,11 +52,23 @@ final class IndexController extends AbstractController
         int $page = 0,
     ): Response
     {
-        // Получаем список всех брендов
-        $query = $allCarModelGenerations->findAll();
+        // Поиск
+        $search = new SearchDTO();
 
-        return $this->render([
-            'query' => $query,
-        ]);
+        $searchForm = $this
+            ->createForm(
+                type: SearchForm::class,
+                data: $search,
+                options: ['action' => $this->generateUrl('reference-car:admin.car-model-generations.index')]
+            )
+            ->handleRequest($request);
+
+
+        // Получаем список всех брендов
+        $query = $allCarModelGenerations
+            ->search($search)
+            ->findAll();
+
+        return $this->render(['query' => $query, 'search' => $searchForm->createView()]);
     }
 }

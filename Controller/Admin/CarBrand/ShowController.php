@@ -21,13 +21,15 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Controller\Admin\CarBrand;
 
 use BaksDev\Core\Controller\AbstractController;
 use BaksDev\Core\Listeners\Event\Security\RoleSecurity;
 use BaksDev\Core\Type\UidType\ParamConverter;
 use BaksDev\Reference\Car\Repository\CarBrandById\CarBrandByIdInterface;
-use BaksDev\Reference\Car\Repository\CarModelsByBrand\CarModelsByBrandIdInterface;
+use BaksDev\Reference\Car\Repository\CarModelsByBrand\CarModelsByBrandInterface;
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -37,24 +39,19 @@ use Symfony\Component\Routing\Attribute\Route;
 #[RoleSecurity(['ROLE_CAR_BRAND', 'ROLE_CAR_BRAND_SHOW'])]
 final class ShowController extends AbstractController
 {
-    #[Route('/admin/car-brand/{id}', name: 'car-brands.admin.show', methods: ['GET'])]
+    #[Route('/admin/car-brand/{id}', name: 'admin.car-brands.show', methods: ['GET'])]
     public function show(
         #[ParamConverter(CarBrandUid::class)] CarBrandUid $id,
         CarBrandByIdInterface $carBrandById,
-        CarModelsByBrandIdInterface $carModelsByBrandId,
+        CarModelsByBrandInterface $carModelsByBrandId,
     ): Response
     {
         $carBrand = $carBrandById
             ->forBrand($id)
             ->find();
 
-        $carModels = $carModelsByBrandId
-            ->forBrand($id)
-            ->findAll();
+        $carModels = $carModelsByBrandId->findAll($id);
 
-        return $this->render([
-            'carBrand' => $carBrand,
-            'carModels' => $carModels,
-        ]);
+        return $this->render(['carBrand' => $carBrand, 'carModels' => $carModels]);
     }
 }

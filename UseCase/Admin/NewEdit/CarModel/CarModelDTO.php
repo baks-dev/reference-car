@@ -21,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModel;
 
 use BaksDev\Reference\Car\Entity\CarModel\CarModelInterface;
@@ -44,6 +46,7 @@ final class CarModelDTO implements CarModelInterface
 
     public function __construct()
     {
+        $this->id = new CarModelUid();
         $this->name = new CarModelNameDTO();
     }
 
@@ -52,9 +55,10 @@ final class CarModelDTO implements CarModelInterface
         return $this->id;
     }
 
-    public function setId(CarModelUid $id): void
+    public function setId(CarModelUid $id): self
     {
         $this->id = $id;
+        return $this;
     }
 
     public function getName(): CarModelNameDTO
@@ -67,8 +71,9 @@ final class CarModelDTO implements CarModelInterface
         return $this->brand;
     }
 
-    public function setBrand(CarBrandUid $brand): void
+    public function setBrand(CarBrandUid $brand): self
     {
         $this->brand = $brand;
+        return $this;
     }
 }

@@ -30,11 +30,4 @@ interface CarBrandInterface
 {
     /** Возвращает идентификатор бренда */
     public function getId(): CarBrandUid;
-
-    /** Возвращает DTO с названием бренда
-     *
-     * @return CarBrandNameDTO
-     */
-    public function getName(): CarBrandNameDTO;
-
 }

@@ -21,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelPetrol\CarModelPetrolHP;
 
 use BaksDev\Reference\Car\Entity\CarModelPetrol\HP\CarModelPetrolHPInterface;

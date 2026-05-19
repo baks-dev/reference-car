@@ -1,5 +1,4 @@
 <?php
-
 /*
  *  Copyright 2025.  Baks.dev <admin@baks.dev>
  *
@@ -22,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarModelPetrol\Year;
 
 use BaksDev\Core\Entity\EntityState;
@@ -32,21 +33,17 @@ use InvalidArgumentException;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/* CarModelPetrolYear */
-
 #[ORM\Entity]
 #[ORM\Table(name: 'car_model_petrol_years')]
-#[UniqueEntity(fields: ['petrol', 'value'], message: 'Этот год уже существует для данной комплектации')]
 class CarModelPetrolYear extends EntityState
 {
     #[Assert\NotBlank]
     #[Assert\Uuid]
     #[ORM\Id]
-    #[ORM\ManyToOne(targetEntity: CarModelPetrol::class, inversedBy: "year")]
+    #[ORM\OneToOne(targetEntity: CarModelPetrol::class, inversedBy: "year")]
     #[ORM\JoinColumn(name: 'petrol', referencedColumnName: 'id')]
     private CarModelPetrol $petrol;
 
-    #[ORM\Id]
     #[ORM\Column(name: 'value', type: YearField::TYPE, nullable: false)]
     private YearField $value;
 

@@ -1,0 +1,21 @@
+{{ form_start(form, { attr: { id: 'carFilterForm' } }) }}
+
+    <div class="w-100">
+        {{ form_row(form.brand) }}
+    </div>
+
+    <div class="w-100">
+        {{ form_row(form.model) }}
+    </div>
+
+    <div class="w-100">
+        {{ form_row(form.generation) }}
+    </div>
+
+    <div class="w-100">
+        {{ form_row(form.petrol) }}
+    </div>
+
+    {{ form_row(form.car_filter_form, { label: 'Подобрать' }) }}
+
+{{ form_end(form) }}

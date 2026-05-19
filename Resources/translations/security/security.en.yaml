@@ -1,25 +1,21 @@
-ROLE_PRODUCT:
-  name: 'Products'
-  desc: 'Product List'
-  header: 'Products'
+# Роль
+ROLE_REFERENCE_CAR:
+  name: 'List of cars'
+  desc: 'List of cars'
 
-ROLE_PRODUCT_INDEX:
+# Правила
+ROLE_REFERENCE_CAR_INDEX:
   name: 'View'
   desc: ''
 
-
-ROLE_PRODUCT_NEW:
-  name: 'Add'
-  desc: ''
-
-ROLE_PRODUCT_EDIT:
+ROLE_REFERENCE_CAR_EDIT:
   name: 'Edit'
   desc: ''
 
-ROLE_PRODUCT_DELETE:
+ROLE_REFERENCE_CAR_DELETE:
   name: 'Delete'
   desc: ''
 
-ROLE_PRODUCT_RENAME:
-  name: 'Rename'
+ROLE_REFERENCE_CAR_NEW:
+  name: 'New'
   desc: ''

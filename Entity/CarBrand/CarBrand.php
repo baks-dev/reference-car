@@ -1,6 +1,4 @@
 <?php
-declare(strict_types=1);
-
 /*
  *  Copyright 2025.  Baks.dev <admin@baks.dev>
  *
@@ -23,9 +21,12 @@ declare(strict_types=1);
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarBrand;
 
 use BaksDev\Core\Entity\EntityState;
+use BaksDev\Reference\Car\Entity\CarBrand\Image\CarBrandImage;
 use BaksDev\Reference\Car\Entity\CarBrand\Name\CarBrandName;
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
 use Doctrine\ORM\Mapping as ORM;
@@ -43,8 +44,16 @@ class CarBrand extends EntityState
     #[ORM\Column(type: CarBrandUid::TYPE)]
     private CarBrandUid $id;
 
+
+    /** Название бренда */
     #[ORM\OneToOne(targetEntity: CarBrandName::class, mappedBy: 'brand', cascade: ['all'])]
     private CarBrandName $name;
+
+
+    /** Изображение */
+    #[ORM\OneToOne(targetEntity: CarBrandImage::class, mappedBy: 'brand', cascade: ['all'], fetch: 'EAGER')]
+    private ?CarBrandImage $image = null;
+
 
     public function __construct(CarBrandUid $id)
     {
@@ -92,5 +101,10 @@ class CarBrand extends EntityState
     public function getName(): CarBrandName
     {
         return $this->name;
+    }
+
+    public function getUploadImage(): ?CarBrandImage
+    {
+        return $this->image;
     }
 }

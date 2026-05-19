@@ -25,147 +25,189 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Messenger\WheelSize\CarModel;
 
-
+use BaksDev\Core\Deduplicator\Deduplicator;
+use BaksDev\Core\Deduplicator\DeduplicatorInterface;
+use BaksDev\Core\Messenger\MessageDelay;
 use BaksDev\Core\Messenger\MessageDispatchInterface;
+use BaksDev\Reference\Car\Command\Parser\RunParserWheelSizeCommand;
 use BaksDev\Reference\Car\Messenger\WheelSize\CarModelGeneration\ParserCarModelGenerationMessage;
-use BaksDev\Reference\Car\Messenger\WheelSize\CarModelImage\ParserCarModelImageMessage;
+use BaksDev\Reference\Car\Service\CarModel\CarModelClassCheckerDTO;
 use BaksDev\Reference\Car\Service\CarModel\CarModelClassCheckerService;
-use BaksDev\Reference\Car\Service\CarModel\CarModelNameClassCheckerService;
+use BaksDev\Reference\Car\Type\CarModels\CarModel;
 use Psr\Log\LoggerInterface;
+use Random\Randomizer;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use DateInterval;
 
 #[AsMessageHandler(priority: 0)]
-final class ParserCarModelInvariableHandler
+#[Autoconfigure(shared: false)]
+final readonly class ParserCarModelInvariableHandler
 {
-    /* Протокол и домен парсинга */
-    private const WHEEL_SIZE_URI = 'https://www.wheel-size.com';
-
     public function __construct(
         #[Target('referenceCarLogger')] private LoggerInterface $logger,
+        private DeduplicatorInterface $Deduplicator,
         private MessageDispatchInterface $messageDispatch,
         private CarModelClassCheckerService $carModelClassCheckerService,
-        private CarModelNameClassCheckerService $carModelNameClassCheckerService,
         private ParserCarModelRequest $parserModelRequest
     ) {}
 
     public function __invoke(ParserCarModelMessage $message): void
     {
-        // Проверяем есть ли класс модели. Если нет, то генерируем
-        $this->carModelClassCheckerService->checkModel($message);
+        if(false === $message->isForced())
+        {
+            /** Делаем проверку дедупликатором */
+            $Deduplicator = $this->Deduplicator
+                ->namespace('reference-car')
+                ->expiresAfter(DateInterval::createFromDateString('1 day'))
+                ->deduplication([$message->getClassName(), md5(self::class)]);
 
-        // Проверяем есть ли класс названия модели. Если нет, то генерируем
-        $this->carModelNameClassCheckerService->checkModelName($message);
+            if($Deduplicator->isExecuted())
+            {
+                return;
+            }
+        }
+
+        $CarModelClassCheckerDTO = new CarModelClassCheckerDTO(
+            $message->getClassName(),
+            $message->getTitle(),
+            $message->getBrand()
+        );
+
+
+        // Проверяем есть ли класс модели. Если нет, то генерируем
+        $this->carModelClassCheckerService->checkModel($CarModelClassCheckerDTO);
+
 
         // Парсим внутреннюю страницу модели
         $this->parseModel($message);
+
+
+        if(false === $message->isForced())
+        {
+            /** @var Deduplicator $Deduplicator */
+            $Deduplicator->save();
+        }
     }
+
 
     /**
      * Парсит внутренние страницы моделей
-     *
-     * @param ParserCarModelMessage $model
-     *
-     * @return void
      */
-    private function parseModel(ParserCarModelMessage $model): void
+    private function parseModel(ParserCarModelMessage $message): void
     {
-        $carModelArray = $model->getAll();
-        echo $carModelArray['title'].PHP_EOL;
+        echo 'Начинаем парсить модель '.$message->getTitle().PHP_EOL;
+        $this->logger->info('Начинаем парсить модель '.$message->getTitle().' по url: '.$message->getUrl());
 
-        $this->logger->info('Начинаем парсить модель '.$carModelArray['title'].' по url: '.$carModelArray['href']);
 
         // Получаем HTML с внутренней страницы модели
-        $html = $this->parserModelRequest->fetchHtml($carModelArray['href']);
-        $crawler = new Crawler($html, self::WHEEL_SIZE_URI.$carModelArray['href']);
+        $html = $this->parserModelRequest->fetchHtml($message->getUrl());
+
+
+        /**
+         * Если ошибка капчи или по иной причине нет контента на странице - пробрасываем отложенное сообщение на этот же
+         * диспатчер
+         */
+        if(false === $html)
+        {
+            $this->messageDispatch->dispatch(
+                $message,
+                stamps: [new MessageDelay('1 hour')],
+                transport: 'reference-car'
+            );
+
+            return;
+        }
+
+
+        $crawler = new Crawler($html, RunParserWheelSizeCommand::WHEEL_SIZE_URL.$message->getUrl());
+
 
         // Ищет список поколений
         $carModelGenerationsGroup = $crawler->filter('.col-md-12.col-sm-12.col-lg-8 .mb-4');
 
+
         // Если поколения найдены, то начинает получать значения с HTML
         if($carModelGenerationsGroup->count() > 0)
         {
-            $carModelGenerations = $carModelGenerationsGroup->filter('.market-generation')->each(function(Crawler $node
-            ) use ($model) {
+            $carModelGenerations = $carModelGenerationsGroup
+                ->filter('.market-generation')
+                ->each(function(Crawler $node) use ($message)
+                {
+                    $years = $node->filter('div.mb-4 a span span')->each(function(Crawler $yearNode) {
+                        return $yearNode->text();
+                    });
 
-                $years = $node->filter('div.mb-4 a span span')->each(function(Crawler $yearNode) {
-                    return $yearNode->text();
+                    return [
+                        'title' => preg_replace([
+                            '/\s*\[\d+\s*\.\.\s*\d+\]|\d+\s*\.\.\s*\d+/',
+                            '/\s+/u',
+                            '/[«»"\'`“”‘’]/u',
+                            '/^[\s\-]+|[\s\-]+$/u',
+                        ], [
+                            '',
+                        ],
+                            trim(
+                                // Нормализация неразрывных пробелов перед обработкой
+                                str_replace(["\u{A0}", "\xC2\xA0"], ' ',
+                                    $node
+                                        ->filter('a:first-child h2 .fw-400.text-nowrap')
+                                        ->text(),
+                                ),
+                            )),
+                        'href' => $node
+                            ->filter('a:first-child')
+                            ->attr('href'),
+                        'years' => $years,
+                        'imageSrc' => $node
+                            ->filter('.img-fluid.img-thumbnail')
+                            ->attr('src'),
+                    ];
                 });
-                $countries = $node->filter('div.mb-4 .badge')->each(function(Crawler $countrieNode) {
-                    return $countrieNode->text();
-                });
-
-                // Проверяем скачано ли изображение, если нет, то качаем
-                $this->messageDispatch->dispatch(
-                    new ParserCarModelImageMessage(
-                        $model->getTitle(),
-                        $model->getNamespace(),
-                        $node->filter('.img-fluid.img-thumbnail')->attr('src'),
-                    ),
-                //                    stamps: [new MessageDelay('5 seconds')],
-                //                    transport: (string) 'reference-car'
-                );
-
-                return [
-                    'title' => preg_replace([
-                        '/\s*\[\d+\s*\.\.\s*\d+\]|\d+\s*\.\.\s*\d+/',
-                        '/\s+/u',
-                        '/[«»"\'`“”‘’]/u',
-                        '/^[\s\-]+|[\s\-]+$/u',
-                    ], [
-                        '',
-                    ],
-                        trim(
-                        // Нормализация неразрывных пробелов перед обработкой
-                            str_replace(["\u{A0}", "\xC2\xA0"], ' ',
-                                $node->filter('a:first-child h2 .fw-400.text-nowrap')->text(),
-                            ),
-                        )),
-                    'href' => $node->filter('a:first-child')->attr('href'),
-                    'years' => $years,
-                    'countries' => $countries,
-                ];
-            });
-
-            // Получаем все года модели и оставляем только уникальные, сортируем от меньшего к большему
-            $allModelYears = array_merge(...array_column($carModelGenerations, 'years'));
-            $uniqueModelYears = array_unique($allModelYears);
-            sort($uniqueModelYears);
-
-            // По полученным годам генераций создаем клаасы годов модели
-            //            $this->carModelYearClassCheckerService->checkModelYear($model, $uniqueModelYears);
 
             foreach($carModelGenerations as $carModelGeneration)
             {
-                if(empty($carModelGeneration['title']))
-                {
-                    continue;
-                }
+                $title = (false === empty($carModelGeneration['title'])) ?
+                    $message->getTitle().' '.$carModelGeneration['title'].' ('.$carModelGeneration['years'][0].'-'.$carModelGeneration['years'][1].')' :
+                    $message->getTitle().' ('.$carModelGeneration['years'][0].'-'.$carModelGeneration['years'][1].')';
+
 
                 // Составляем имя класса поколения
-                $carModelGeneration['class_name'] = preg_replace(
+                $carModelGeneration['class_name'] = $message->getClassName().preg_replace(
                     '/[^a-zA-Z0-9]/',
                     '',
                     str_replace(
                         [' ', '-', '.', '[', ']', '/', '(', ')', '&', ':'],
                         '',
-                        $carModelGeneration['title'],
+                        $carModelGeneration['title'].$carModelGeneration['years'][0].$carModelGeneration['years'][1]
                     ),
                 );
 
+
+                $sleep = new Randomizer()->getInt(7, 10);
+
+                if(false === RunParserWheelSizeCommand::IS_ASYNC)
+                {
+                    sleep($sleep);
+                }
+
+
                 // Отправляяем данные в очередь
                 $this->messageDispatch->dispatch(
-                    new ParsercarModelGenerationMessage(
-                        (string) $carModelGeneration['href'],
-                        (string) $carModelGeneration['class_name'],
-                        (string) $carModelGeneration['title'],
-                        (array) $carModelGeneration['years'],
-                        (array) $carModelGeneration['countries'],
-                        (array) $carModelGeneration['model'] = $carModelArray,
+                    message: new ParsercarModelGenerationMessage(
+                        $carModelGeneration['href'],
+                        $carModelGeneration['class_name'],
+                        $title,
+                        new CarModel($message->getClassName(), $message->getNamespace(), $message->getBrand()),
+                        $message->isForced()
                     ),
-                //                    stamps: [new MessageDelay('5 seconds')],
-                //                    transport: (string) 'reference-car'
+                    stamps: RunParserWheelSizeCommand::IS_ASYNC ? [new MessageDelay(sprintf(
+                        '%s seconds',
+                        $sleep
+                    ))] : [],
+                    transport: RunParserWheelSizeCommand::IS_ASYNC ? 'reference-car' : null
                 );
             }
         }

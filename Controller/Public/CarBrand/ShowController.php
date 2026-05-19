@@ -21,13 +21,19 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Controller\Public\CarBrand;
 
 use BaksDev\Core\Controller\AbstractController;
+use BaksDev\Core\Type\Field\InputField;
+use BaksDev\Field\Tire\Radius\Type\TireRadiusField;
+use BaksDev\Products\Category\Repository\OneCategoryByFieldType\OneCategoryByFieldTypeInterface;
+use BaksDev\Products\Product\Forms\ProductCategoryFilter\User\ProductCategoryFilterDTO;
+use BaksDev\Products\Product\Forms\ProductCategoryFilter\User\ProductCategoryFilterForm;
 use BaksDev\Reference\Car\Forms\CarBrandFilter\CarFilterForm;
-use BaksDev\Reference\Car\Repository\CarBrandByName\CarBrandByNameInterface;
-use BaksDev\Reference\Car\Repository\CarModelsByBrandName\CarModelsByBrandNameInterface;
-use BaksDev\Reference\Car\Type\CarBrands\Name\CarBrandName;
+use BaksDev\Reference\Car\Repository\CarBrandByUrl\CarBrandByUrlInterface;
+use BaksDev\Reference\Car\Repository\CarModelsByBrandUrl\CarModelsByBrandUrlInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -36,36 +42,72 @@ use Symfony\Component\Routing\Attribute\Route;
 #[AsController]
 final class ShowController extends AbstractController
 {
-    #[Route('/auto/{name}', name: 'car-brands.public.show', methods: ['GET'])]
+    #[Route('/auto/{brandName}', name: 'public.car-brands.show', methods: ['GET', 'POST'])]
     public function show(
-        $name,
-        CarBrandByNameInterface $carBrandByBrandName,
-        CarModelsByBrandNameInterface $carModelsByBrandName,
+        string $brandName,
+        CarBrandByUrlInterface $CarBrandByBrandUrlRepository,
+        CarModelsByBrandUrlInterface $carModelsByBrandUrlRepository,
+        OneCategoryByFieldTypeInterface $OneCategoryByFieldTypeRepository,
         Request $request,
     ): Response
     {
-        $name = new CarBrandName($name);
+        /** Находим любую категорию шин (где типом торгового предложения будет являться радиус) */
+        $categoryUid = $OneCategoryByFieldTypeRepository->find(new InputField(TireRadiusField::TYPE));
 
-        $form = $this->createForm(CarFilterForm::class);
-        $form->handleRequest($request);
+
+        /** Фильтр по параметрам */
+        $productCategoryFilterDTO = new ProductCategoryFilterDTO($categoryUid);
+        $productFilterForm = $this->createForm(ProductCategoryFilterForm::class,
+            $productCategoryFilterDTO,
+            ['action' => $this->generateUrl('products-product:public.catalog.index')]
+        );
+
+
+        $carBrand = $CarBrandByBrandUrlRepository->find($brandName);
+
+        $data = $request->get('car_filter_form');
+
+        $formData = false === empty($data['brand']) ?
+            [
+                'brand' => $data['brand'],
+                'model' => $data['model'] ?? null,
+                'generation' => $data['generation'] ?? null,
+                'petrol' => $data['petrol'] ?? null,
+            ] :
+            ['brand' => $brandName, 'model' => null, 'generation' => null, 'petrol' => null];
+
+        $form = $this
+            ->createForm(
+                CarFilterForm::class,
+                $formData,
+                ['action' => $this->generateUrl('reference-car:public.car-models-petrols.show', $formData)]
+            )
+            ->handleRequest($request);
 
         if($form->isSubmitted() && $form->isValid())
         {
-            $data = $form->getData();
+            return $this->redirectToRoute('reference-car:public.car-models-petrols.show', $formData);
         }
 
-        $carBrand = $carBrandByBrandName
-            ->forBrandName($name)
-            ->find();
 
-        $carModels = $carModelsByBrandName
-            ->forBrandName($name)
-            ->findAll();
+        /* если форма отправлена AJAX - нам достаточно только формы поиска по типу автомобиля */
+        if($request->isXmlHttpRequest())
+        {
+            return $this->render(
+                ['form' => $form->createView()],
+                dir: '/',
+                file: 'public/car-filter-form/car-filter-form.html.twig',
+            );
+        }
+
+
+        $carModels = $carModelsByBrandUrlRepository->findAll($brandName);
 
         return $this->render([
             'carBrand' => $carBrand,
             'carModels' => $carModels,
             'form' => $form->createView(),
+            'filter_tire' => $productFilterForm->createView(),
         ]);
     }
 }

@@ -21,6 +21,8 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Type\CarModels\Id;
 
 use BaksDev\Core\Type\UidType\Uid;
@@ -41,6 +43,6 @@ final class CarModelUid extends Uid
 
     public function __toString(): string
     {
-        return $this->getValue();
+        return (string) $this->getValue();
     }
 }

@@ -42,8 +42,6 @@ use BaksDev\Reference\Car\Type\CarModelPetrols\Name\CarModelPetrolName;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Name\CarModelPetrolNameType;
 use BaksDev\Reference\Car\Type\CarModelPetrols\PS\CarModelPetrolPS;
 use BaksDev\Reference\Car\Type\CarModelPetrols\PS\CarModelPetrolPSType;
-use BaksDev\Reference\Car\Type\CarModelPetrols\SaleRegion\CarModelPetrolSaleRegion;
-use BaksDev\Reference\Car\Type\CarModelPetrols\SaleRegion\CarModelPetrolSaleRegionType;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Year\CarModelPetrolYear;
 use BaksDev\Reference\Car\Type\CarModelPetrols\Year\CarModelPetrolYearType;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelType;
@@ -81,7 +79,6 @@ return static function(ContainerConfigurator $container, DoctrineConfig $doctrin
     $doctrine->dbal()->type(CarModelPetrolHP::TYPE)->class(CarModelPetrolHPType::class);
     $doctrine->dbal()->type(CarModelPetrolKW::TYPE)->class(CarModelPetrolKWType::class);
     $doctrine->dbal()->type(CarModelPetrolPS::TYPE)->class(CarModelPetrolPSType::class);
-    $doctrine->dbal()->type(CarModelPetrolSaleRegion::TYPE)->class(CarModelPetrolSaleRegionType::class);
     $doctrine->dbal()->type(CarModelPetrolYear::TYPE)->class(CarModelPetrolYearType::class);
     $doctrine->dbal()->type(CarModelGenerationUid::TYPE)->class(CarModelGenerationType::class);
     $doctrine->dbal()->type(CarModelGenerationName::TYPE)->class(CarModelGenerationNameType::class);
@@ -110,7 +107,6 @@ return static function(ContainerConfigurator $container, DoctrineConfig $doctrin
     $services->set(CarModelPetrolName::class)->class(CarModelPetrolName::class);
     $services->set(CarModelPetrolHP::class)->class(CarModelPetrolHP::class);
     $services->set(CarModelPetrolKW::class)->class(CarModelPetrolKW::class);
-    $services->set(CarModelPetrolSaleRegion::class)->class(CarModelPetrolSaleRegion::class);
     $services->set(CarModelPetrolYear::class)->class(CarModelPetrolYear::class);
     $services->set(CarModelGenerationUid::class)->class(CarModelGenerationUid::class);
     $services->set(CarModelGenerationName::class)->class(CarModelGenerationName::class);

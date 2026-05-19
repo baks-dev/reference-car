@@ -25,60 +25,33 @@ declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Messenger\WheelSize\CarModelGeneration;
 
-use BaksDev\Reference\Car\Type\CarModelGenerations\Id\ModelGenerations\CarModelGenerationsInterface;
+use BaksDev\Reference\Car\Type\CarModelGenerations\ModelGenerations\CarModelGenerationsInterface;
+use BaksDev\Reference\Car\Type\CarModels\CarModel;
 
-final class ParserCarModelGenerationMessage
+final readonly class ParserCarModelGenerationMessage
 {
-
-    /** Url поколения */
-    private string $url;
-
-
-    /** Имя класса поколения */
-    private string $className;
-
-    /** Имя поколения */
-    private string $title;
-
-    /** Года поколения */
-    private array $years;
-
-    /** Страны поколения */
-    private array $countries;
-
-    /** модель поколения */
-    private array $model;
-
-
     public function __construct(
-        string $url,
-        string $className,
-        string $title,
-        array $years,
-        array $countries,
-        array $model
-    )
-    {
-        $this->url = (string) $url;
-        $this->className = (string) $className;
-        $this->title = (string) $title;
-        $this->years = (array) $years;
-        $this->countries = (array) $countries;
-        $this->model = (array) $model;
-    }
+        private string $url,
+        private string $className,
+        private string $title,
+        private CarModel $model,
+        private ?bool $isForced = false,
+    ) {}
 
 
     /** Url поколения */
     public function getUrl(): string
     {
-        return (string) $this->url;
+        return $this->url;
     }
+
 
     /** Namespace класса поколения */
     public function getNamespace(): string
     {
-        return CarModelGenerationsInterface::GENERATION_NAMESPACE.'Collection\\'.$this->className;
+        return CarModelGenerationsInterface::GENERATION_NAMESPACE.'Collection\\';
     }
+
 
     /** Имя класса поколения */
     public function getClassName(): string
@@ -86,56 +59,23 @@ final class ParserCarModelGenerationMessage
         return $this->className;
     }
 
+
     /** Имя поколения */
     public function getTitle(): string
     {
         return $this->title;
     }
 
-    /**
-     * Года поколения
-     */
-    public function getYears(): array
-    {
-        return $this->years;
-    }
-
-    /**
-     * Страны поколения
-     */
-    public function getCountries(): array
-    {
-        return $this->countries;
-    }
 
     /** Модель поколения */
-    public function getModel(): array
+    public function getModel(): CarModel
     {
         return $this->model;
     }
 
-    /**
-     * Возвращает все поля сообщения в виде массива
-     *
-     * @return array{
-     *     url: string,
-     *     className: string,
-     *     title: string,
-     *     years: array,
-     *     countries: array,
-     *     model: array
-     * }
-     */
 
-    public function getAll(): array
+    public function isForced(): bool
     {
-        return [
-            'href' => $this->url,
-            'class_name' => $this->className,
-            'title' => $this->title,
-            'years' => $this->years,
-            'countries' => $this->countries,
-            'model' => $this->model,
-        ];
+        return $this->isForced;
     }
 }

@@ -1,55 +1,49 @@
 <?php
+/*
+ * Copyright 2026.  Baks.dev <admin@baks.dev>
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is furnished
+ *  to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NON INFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 
 declare(strict_types=1);
 
 namespace BaksDev\Reference\Car\Repository\CarModelById;
 
 use BaksDev\Core\Doctrine\DBALQueryBuilder;
+use BaksDev\Reference\Car\Entity\CarBrand\CarBrand;
 use BaksDev\Reference\Car\Entity\CarBrand\Name\CarBrandName;
 use BaksDev\Reference\Car\Entity\CarModel\CarModel;
 use BaksDev\Reference\Car\Entity\CarModel\Name\CarModelName;
-use BaksDev\Reference\Car\Entity\CarModelPetrol\CarModelPetrol;
-use BaksDev\Reference\Car\Entity\CarModelPetrol\SaleRegion\CarModelPetrolSaleRegion;
-use BaksDev\Reference\Car\Entity\CarModelPetrol\Year\CarModelPetrolYear;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
-use InvalidArgumentException;
 
-final class CarModelByIdRepository implements CarModelByIdInterface
+final readonly class CarModelByIdRepository implements CarModelByIdInterface
 {
-    private CarModelUid|false $model = false;
-
     public function __construct(private DBALQueryBuilder $DBALQueryBuilder) {}
 
-    /**
-     * Передаем в метод uid или сущность для дальнейшей передачи в запрос
-     *
-     * @param CarModelUid|CarModel $model
-     *
-     * @return $this
-     */
-    public function forModel(CarModelUid|CarModel $model): self
-    {
-        if($model instanceof CarModel)
-        {
-            $model = $model->getId();
-        }
-
-        $this->model = $model;
-
-        return $this;
-    }
 
     /**
      * Метод возвращает детальную информацию о модели
      */
-    public function find(): CarModelByIdResult|false
+    public function find(CarModelUid $model): CarModelByIdResult|false
     {
-        if(false === ($this->model instanceof CarModelUid))
-        {
-            throw new InvalidArgumentException('Invalid Argument CarModel');
-        }
-
         $dbal = $this->DBALQueryBuilder->createQueryBuilder(self::class);
+
 
         /**
          * Основной запрос для получения данных модели
@@ -58,80 +52,46 @@ final class CarModelByIdRepository implements CarModelByIdInterface
             ->select('model.id')
             ->from(CarModel::class, 'model')
             ->where('model.id = :id')
-            ->setParameter('id', $this->model, CarModelUid::TYPE);
+            ->setParameter('id', $model, CarModelUid::TYPE);
+
 
         /**
          * Получаем название модели
          */
         $dbal
-            ->addSelect('name.value as name')
-            ->leftJoin(
+            ->addSelect('model_name.value as name')
+            ->join(
                 'model',
                 CarModelName::class,
-                'name',
-                'name.model = model.id',
+                'model_name',
+                'model_name.model = model.id',
             );
+
 
         /**
          * Получаем id бренда
-         * Получаем название бренда
          */
         $dbal
             ->addSelect('brand_name.brand')
+            ->join('model', CarBrand::class, 'brand', 'brand.id = model.brand');
+
+
+        /**
+         * Получаем название бренда
+         */
+        $dbal
             ->addSelect('brand_name.value as brand_name')
-            ->leftJoin(
+            ->join(
                 'model',
                 CarBrandName::class,
                 'brand_name',
                 'brand_name.brand = model.brand',
             );
 
-        /**
-         * Join`м комплектации для получения всех годов и регионов продаж
-         */
-        $dbal
-            ->leftJoin(
-                'model',
-                CarModelPetrol::class,
-                'petrol',
-                'petrol.model = model.id',
-            );
-
-        /**
-         * Получаем все года всех комплектаций модели
-         */
-        $dbal->addSelect(
-            "
-            JSON_AGG 
-                (DISTINCT
-                    JSONB_BUILD_OBJECT
-                    (
-                        'year', petrol_year.value
-                    )
-                ) FILTER (WHERE petrol_year.value IS NOT NULL) AS years")
-            ->leftJoin(
-                'petrol',
-                CarModelPetrolYear::class,
-                'petrol_year',
-                'petrol_year.petrol = petrol.id',
-            );
-
-        /**
-         * Получаем все регионы продаж всех комплектаций модели
-         */
-        $dbal->addSelect(
-            "JSON_AGG (DISTINCT region.value) AS regions")
-            ->leftJoin(
-                'petrol',
-                CarModelPetrolSaleRegion::class,
-                'region',
-                'region.petrol = petrol.id',
-            );
 
         $dbal->allGroupByExclude();
 
         return $dbal->fetchHydrate(CarModelByIdResult::class);
 
     }
-
 }

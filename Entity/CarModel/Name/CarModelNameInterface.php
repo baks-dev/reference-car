@@ -21,10 +21,11 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Entity\CarModel\Name;
 
 use BaksDev\Reference\Car\Type\CarModels\Name\CarModelName;
-
 
 interface CarModelNameInterface
 {

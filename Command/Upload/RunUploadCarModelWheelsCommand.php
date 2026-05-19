@@ -28,15 +28,7 @@ namespace BaksDev\Reference\Car\Command\Upload;
 use BaksDev\Core\Command\Update\ProjectUpgradeInterface;
 use BaksDev\Reference\Car\Entity\CarModelWheel\CarModelWheel;
 use BaksDev\Reference\Car\Repository\ExistCarModelWheel\ExistCarModelWheelInterface;
-use BaksDev\Reference\Car\Type\CarModelWheels\Backspacing\ModelWheels\CarModelWheelsBackspacingInterface;
-use BaksDev\Reference\Car\Type\CarModelWheels\Bar\ModelWheels\CarModelWheelsBarInterface;
-use BaksDev\Reference\Car\Type\CarModelWheels\Diameter\ModelWheels\CarModelWheelsDiameterInterface;
-use BaksDev\Reference\Car\Type\CarModelWheels\Id\ModelWheels\CarModelWheelsInterface;
-use BaksDev\Reference\Car\Type\CarModelWheels\OffsetRange\ModelWheels\CarModelWheelsOffsetRangeInterface;
-use BaksDev\Reference\Car\Type\CarModelWheels\Profile\ModelWheels\CarModelWheelsProfileInterface;
-use BaksDev\Reference\Car\Type\CarModelWheels\Rim\ModelWheels\CarModelWheelsRimInterface;
-use BaksDev\Reference\Car\Type\CarModelWheels\TireWeight\ModelWheels\CarModelWheelsTireWeightInterface;
-use BaksDev\Reference\Car\Type\CarModelWheels\Width\ModelWheels\CarModelWheelsWidthInterface;
+use BaksDev\Reference\Car\Type\CarModelWheels\ModelWheels\CarModelWheelsInterface;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelWheel\CarModelWheelDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelWheel\CarModelWheelHandler;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -57,17 +49,7 @@ class RunUploadCarModelWheelsCommand extends Command implements ProjectUpgradeIn
     public function __construct(
         private readonly CarModelWheelHandler $carModelWheelHandler,
         private readonly ExistCarModelWheelInterface $ExistCarModelWheelRepository,
-
         #[AutowireIterator('baks.car.model.wheels')] private readonly iterable $carModelWheels,
-        #[AutowireIterator('baks.car.model.wheels.diameter')] private readonly iterable $carModelWheelDiameters,
-        #[AutowireIterator('baks.car.model.wheels.bar')] private readonly iterable $carModelWheelBars,
-        #[AutowireIterator('baks.car.model.wheels.backspacing')] private readonly iterable $carModelWheelBackspacings,
-        #[AutowireIterator('baks.car.model.wheels.offset.range')] private readonly iterable $carModelWheelOffsetRanges,
-        #[AutowireIterator('baks.car.model.wheels.profile')] private readonly iterable $carModelWheelProfiles,
-        #[AutowireIterator('baks.car.model.wheels.rim')] private readonly iterable $carModelWheelRims,
-        #[AutowireIterator('baks.car.model.wheels.tire.weight')] private readonly iterable $carModelWheelTireWeights,
-        #[AutowireIterator('baks.car.model.wheels.width')] private readonly iterable $carModelWheelWidths,
-
     )
     {
         parent::__construct();
@@ -88,19 +70,12 @@ class RunUploadCarModelWheelsCommand extends Command implements ProjectUpgradeIn
         $io = new SymfonyStyle($input, $output);
         $io->text('Загрузка шин автомобилей');
 
+
         /**
          * Счетчик загруженных элементов для вывода статистики
          */
         $count = 0;
 
-        $carModelWheelDiameters = iterator_to_array($this->carModelWheelDiameters);
-        $carModelWheelBars = iterator_to_array($this->carModelWheelBars);
-        $carModelWheelBackspacings = iterator_to_array($this->carModelWheelBackspacings);
-        $carModelWheelOffsetRanges = iterator_to_array($this->carModelWheelOffsetRanges);
-        $carModelWheelProfiles = iterator_to_array($this->carModelWheelProfiles);
-        $carModelWheelRims = iterator_to_array($this->carModelWheelRims);
-        $carModelWheelTireWeights = iterator_to_array($this->carModelWheelTireWeights);
-        $carModelWheelWidths = iterator_to_array($this->carModelWheelWidths);
 
         /** @var CarModelWheelsInterface $carModelWheel */
         foreach($this->carModelWheels as $carModelWheel)
@@ -108,100 +83,49 @@ class RunUploadCarModelWheelsCommand extends Command implements ProjectUpgradeIn
             /** Проверяем что колесо не добавлено */
             $isExistCarModelWheel = $this->ExistCarModelWheelRepository->exist($carModelWheel::getUid());
 
+
             /**
-             * Если модель найдена, то пропускаем его загрузку
+             * Если шина найдена, то пропускаем его загрузку
              */
             if(true === $isExistCarModelWheel)
             {
                 continue;
             }
 
+
             /**
-             * Создаем DTO для бренда вместе с названием бренда
+             * Создаем DTO для шины
              */
             $carModelWheelDTO = new CarModelWheelDTO();
+
             $carModelWheelDTO->setId($carModelWheel::getUid());
-            $carModelWheelDTO->setModelPetrol($carModelWheel->getModelPetrolUid());
 
-            /** @var CarModelWheelsDiameterInterface $carModelWheelDiameter */
-            foreach($carModelWheelDiameters as $carModelWheelDiameter)
-            {
-                if(true === $carModelWheelDiameter::equals($carModelWheel::getUid()))
-                {
-                    $carModelDiameterDTO = $carModelWheelDTO->getDiameter();
-                    $carModelDiameterDTO->setValue($carModelWheelDiameter::getValue());
-                }
-            }
+            $carModelWheelDTO->setPetrol($carModelWheel::getModelPetrolUid());
 
-            /** @var CarModelWheelsBarInterface $carModelWheelBar */
-            foreach($carModelWheelBars as $carModelWheelBar)
-            {
-                if(true === $carModelWheelBar::equals($carModelWheel::getUid()))
-                {
-                    $carModelBarDTO = $carModelWheelDTO->getBar();
-                    $carModelBarDTO->setValue($carModelWheelBar::getValue());
-                }
-            }
+            $carModelWheelBackspacingDTO = $carModelWheelDTO->getBackspacing();
+            $carModelWheelBackspacingDTO->setValue($carModelWheel::getBackspacingValue());
 
-            /** @var CarModelWheelsBackspacingInterface $carModelWheelBackspacing */
-            foreach($carModelWheelBackspacings as $carModelWheelBackspacing)
-            {
-                if(true === $carModelWheelBackspacing::equals($carModelWheel::getUid()))
-                {
-                    $carModelBackspacingDTO = $carModelWheelDTO->getBackspacing();
-                    $carModelBackspacingDTO->setValue($carModelWheelBackspacing::getValue());
-                }
-            }
+            $carModelWheelBarDTO = $carModelWheelDTO->getBar();
+            $carModelWheelBarDTO->setValue($carModelWheel::getBarValue());
 
-            /** @var CarModelWheelsOffsetRangeInterface $carModelWheelOffsetRange */
-            foreach($carModelWheelOffsetRanges as $carModelWheelOffsetRange)
-            {
-                if(true === $carModelWheelOffsetRange::equals($carModelWheel::getUid()))
-                {
-                    $carModelOffsetRangeDTO = $carModelWheelDTO->getOffsetRange();
-                    $carModelOffsetRangeDTO->setValue($carModelWheelOffsetRange::getValue());
-                }
-            }
+            $carModelWheelDiameterDTO = $carModelWheelDTO->getDiameter();
+            $carModelWheelDiameterDTO->setValue($carModelWheel::getDiameterValue());
 
-            /** @var CarModelWheelsProfileInterface $carModelWheelProfile */
-            foreach($carModelWheelProfiles as $carModelWheelProfile)
-            {
-                if(true === $carModelWheelProfile::equals($carModelWheel::getUid()))
-                {
-                    $carModelProfileDTO = $carModelWheelDTO->getProfile();
-                    $carModelProfileDTO->setValue($carModelWheelProfile::getValue());
-                }
-            }
+            $carModelWheelOffsetRangeDTO = $carModelWheelDTO->getOffsetRange();
+            $carModelWheelOffsetRangeDTO->setValue($carModelWheel::getOffsetRangeValue());
 
-            /** @var CarModelWheelsRimInterface $carModelWheelRim */
-            foreach($carModelWheelRims as $carModelWheelRim)
-            {
-                if(true === $carModelWheelRim::equals($carModelWheel::getUid()))
-                {
-                    $carModelRimDTO = $carModelWheelDTO->getRim();
-                    $carModelRimDTO->setValue($carModelWheelRim::getValue());
-                }
-            }
+            $carModelWheelProfileDTO = $carModelWheelDTO->getProfile();
+            $carModelWheelProfileDTO->setValue($carModelWheel::getProfileValue());
 
-            /** @var CarModelWheelsTireWeightInterface $carModelWheelTireWeight */
-            foreach($carModelWheelTireWeights as $carModelWheelTireWeight)
-            {
-                if(true === $carModelWheelTireWeight::equals($carModelWheel::getUid()))
-                {
-                    $carModelTireWeightDTO = $carModelWheelDTO->getTireWeight();
-                    $carModelTireWeightDTO->setValue($carModelWheelTireWeight::getValue());
-                }
-            }
+            $carModelWheelRimDTO = $carModelWheelDTO->getRim();
+            $carModelWheelRimDTO->setValue($carModelWheel::getRimValue());
 
-            /** @var CarModelWheelsWidthInterface $carModelWheelWidth */
-            foreach($carModelWheelWidths as $carModelWheelWidth)
-            {
-                if(true === $carModelWheelWidth::equals($carModelWheel::getUid()))
-                {
-                    $carModelWidthDTO = $carModelWheelDTO->getWidth();
-                    $carModelWidthDTO->setValue($carModelWheelWidth::getValue());
-                }
-            }
+            $carModelWheelTireWeightDTO = $carModelWheelDTO->getTireWeight();
+            $carModelWheelTireWeightDTO->setValue($carModelWheel::getTireWeightValue());
+
+            $carModelWheelWidthDTO = $carModelWheelDTO->getWidth();
+            $carModelWheelWidthDTO->setValue($carModelWheel::getWidthValue());
+
 
             /**
              * Создаем новое колесо
@@ -209,7 +133,7 @@ class RunUploadCarModelWheelsCommand extends Command implements ProjectUpgradeIn
             $carModelWheel = $this->carModelWheelHandler->handle($carModelWheelDTO);
 
             /**
-             * Выдаем сообщение в консоль об успехе загрузки модели
+             * Выдаем сообщение в консоль об успехе загрузки шины
              */
             if($carModelWheel instanceof CarModelWheel)
             {
@@ -218,9 +142,9 @@ class RunUploadCarModelWheelsCommand extends Command implements ProjectUpgradeIn
             }
         }
 
-        $io->text("Загружено моделей: {$count}");
+        $io->text("Загружено шин: ".$count);
         $io->text("Загрузка завершена");
-        echo "Загружено моделей: {$count}".PHP_EOL;
+        echo "Загружено шин: ".$count.PHP_EOL;
         echo "Загрузка завершена".PHP_EOL;
         return Command::SUCCESS;
     }

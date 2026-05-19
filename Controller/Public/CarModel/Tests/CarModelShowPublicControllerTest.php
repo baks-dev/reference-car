@@ -21,20 +21,23 @@
  *  THE SOFTWARE.
  */
 
+declare(strict_types=1);
+
 namespace BaksDev\Reference\Car\Controller\Public\CarModel\Tests;
 
 use App\Kernel;
+use BaksDev\Reference\Car\Type\CarBrands\Name\CarBrandName as CarBrandNameField;
 use BaksDev\Users\User\Tests\TestUserAccount;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- */
 #[When(env: 'test')]
+#[Group('reference-car')]
+#[Group('reference-car-controller')]
 final class CarModelShowPublicControllerTest extends WebTestCase
 {
-    private const string URL = '/auto/acura/integra';
+    private const string URL = '/auto';
 
     protected static function getKernelClass(): string
     {
@@ -43,13 +46,15 @@ final class CarModelShowPublicControllerTest extends WebTestCase
 
     public function testSuccessful(): void
     {
+        $url = strtr(strtolower(CarBrandNameField::TEST), ['(' => '', ')' => '', ' ' => '-', '/' => '-']);
+
         self::ensureKernelShutdown();
         $client = self::createClient();
 
         foreach(TestUserAccount::getDevice() as $device)
         {
             $client->setServerParameter('HTTP_USER_AGENT', $device);
-            $client->request('GET', self::URL);
+            $client->request('GET', self::URL.'/'.$url);
 
             self::assertResponseIsSuccessful();
         }

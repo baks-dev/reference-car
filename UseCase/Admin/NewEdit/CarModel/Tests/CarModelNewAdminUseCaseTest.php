@@ -30,88 +30,70 @@ use BaksDev\Reference\Car\Entity\CarModel\Name\CarModelName;
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
 use BaksDev\Reference\Car\Type\CarModels\Name\CarModelName as CarModelNameField;
+use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarBrand\Tests\CarBrandNewAdminUseCaseTest;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModel\CarModelDTO;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModel\CarModelHandler;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DependsOnClass;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
-/**
- * @group reference-car
- * @group reference-car-usecase
- * @group reference-car-repository
- * @group reference-car-controller
- */
 #[When(env: 'test')]
+#[Group('reference-car')]
+#[Group('reference-car-usecase')]
+#[Group('reference-car-repository')]
+#[Group('reference-car-controller')]
 class CarModelNewAdminUseCaseTest extends KernelTestCase
 {
     /**
      * Удаляем тестовые данные перед началом тестов
-     *
-     * @return void
      */
     public static function setUpBeforeClass(): void
     {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
+        /** @var EntityManagerInterface $EntityManager */
+        $EntityManager = self::getContainer()->get(EntityManagerInterface::class);
 
-        self::clearTestData($em);
-    }
-
-    /**
-     * Удаляем тестовые данные после завершения всех тестов
-     *
-     * @return void
-     */
-    public static function tearDownAfterClass(): void
-    {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
-
-        self::clearTestData($em);
-    }
-
-    /**
-     * Удаляет тестовые данные
-     *
-     * @param EntityManagerInterface $em
-     * @return void
-     */
-    private static function clearTestData(EntityManagerInterface $em): void
-    {
-        $model = $em->getRepository(CarModel::class)
+        $model = $EntityManager
+            ->getRepository(CarModel::class)
             ->findOneBy(['id' => CarModelUid::TEST]);
 
         if($model)
         {
-            $em->remove($model);
+            $EntityManager->remove($model);
         }
 
-        $modelName = $em->getRepository(CarModelName::class)
+        $modelName = $EntityManager
+            ->getRepository(CarModelName::class)
             ->findOneBy(['model' => CarModelUid::TEST]);
 
         if($modelName)
         {
-            $em->remove($modelName);
+            $EntityManager->remove($modelName);
         }
 
-        $em->flush();
-        $em->clear();
+        $EntityManager->flush();
+        $EntityManager->clear();
     }
 
+
+    #[DependsOnClass(CarBrandNewAdminUseCaseTest::class)]
     public function testUseCase(): void
     {
-        $carModelHandler = self::getContainer()->get(CarModelHandler::class);
+        $CarModelHandler = self::getContainer()->get(CarModelHandler::class);
 
-        $carModelDTO = new CarModelDTO();
-        $carModelDTO->setId(new CarModelUid(CarModelUid::TEST));
-        $carModelDTO->setBrand(new CarBrandUid(CarBrandUid::TEST));
+        $CarModelDTO = new CarModelDTO();
+        $CarModelDTO
+            ->setId(new CarModelUid(CarModelUid::TEST))
+            ->setBrand(new CarBrandUid(CarBrandUid::TEST));
 
-        $carModelNameDTO = $carModelDTO->getName();
-        $carModelNameDTO->setValue(new CarModelNameField(CarModelNameField::TEST));
+        $CarModelNameDTO = $CarModelDTO->getName();
+        $CarModelNameDTO
+            ->setValue(new CarModelNameField(CarModelNameField::TEST))
+            ->setUrl(strtr(strtolower(CarModelNameField::TEST), ['(' => '', ')' => '', ' ' => '-', '/' => '-']));
 
-        $carModel = $carModelHandler->handle($carModelDTO);
+        $CarModel = $CarModelHandler->handle($CarModelDTO);
 
-        self::assertInstanceOf(CarModel::class, $carModel);
+        self::assertInstanceOf(CarModel::class, $CarModel);
     }
 }
