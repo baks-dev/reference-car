@@ -54,7 +54,7 @@ final class CarBrandByIdRepository implements CarBrandByIdInterface
 
 
     /**
-     * Метод возвращает детальную информацию о бренда
+     * Метод возвращает детальную информацию о бренде
      */
     public function find(): CarBrandByIdResult|false
     {

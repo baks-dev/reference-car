@@ -109,7 +109,7 @@ final readonly class ParserCarModelGenerationInvariableHandler
         $html = $this->parserCarModelGenerationRequest->fetchHtml($message->getUrl());
         $crawler = new Crawler($html, RunParserWheelSizeCommand::WHEEL_SIZE_URL.$message->getUrl());
 
-        $sleep = new Randomizer()->getInt(1, 100);
+        $sleep = new Randomizer()->getInt(10, 100);
 
         if(false === RunParserWheelSizeCommand::IS_ASYNC)
         {

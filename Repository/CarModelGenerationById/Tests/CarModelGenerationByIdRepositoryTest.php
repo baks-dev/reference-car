@@ -23,30 +23,46 @@
 
 declare(strict_types=1);
 
-namespace BaksDev\Reference\Car\Repository\ExistCarModelGeneration\Tests;
+namespace BaksDev\Reference\Car\Repository\CarModelGenerationById\Tests;
 
-use BaksDev\Reference\Car\Repository\ExistCarModelGeneration\ExistCarModelGenerationInterface;
+use BaksDev\Reference\Car\Repository\CarModelGenerationById\CarModelGenerationByIdInterface;
+use BaksDev\Reference\Car\Repository\CarModelGenerationById\CarModelGenerationByIdResult;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
 use BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\Tests\CarModelGenerationNewAdminUseCaseTest;
 use PHPUnit\Framework\Attributes\DependsOnClass;
 use PHPUnit\Framework\Attributes\Group;
+use ReflectionClass;
+use ReflectionMethod;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\Attribute\When;
 
+#[When(env: 'test')]
 #[Group('reference-car')]
 #[Group('reference-car-repository')]
-#[When(env: 'test')]
-final class ExistCarModelGenerationTest extends KernelTestCase
+final class CarModelGenerationByIdRepositoryTest extends KernelTestCase
 {
     #[DependsOnClass(CarModelGenerationNewAdminUseCaseTest::class)]
     public function testUseCase(): void
     {
-        /** @var ExistCarModelGenerationInterface $ExistCarModelGenerationRepository */
-        $ExistCarModelGenerationRepository = self::getContainer()->get(ExistCarModelGenerationInterface::class);
+        /** @var CarModelGenerationByIdInterface $CarModelGenerationByIdRepository */
+        $CarModelGenerationByIdRepository = self::getContainer()->get(CarModelGenerationByIdInterface::class);
 
-        $existingCarModelGenerationId = new CarModelGenerationUid();
-        $result = $ExistCarModelGenerationRepository->exist($existingCarModelGenerationId);
-        self::assertTrue($result);
+        $CarModelGenerationByIdResult = $CarModelGenerationByIdRepository->find(new CarModelGenerationUid());
+        self::assertInstanceOf(CarModelGenerationByIdResult::class, $CarModelGenerationByIdResult);
+
+
+        // Вызываем все геттеры
+        $reflectionClass = new ReflectionClass(CarModelGenerationByIdResult::class);
+        $methods = $reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC);
+
+        foreach($methods as $method)
+        {
+            // Методы без аргументов
+            if($method->getNumberOfParameters() === 0)
+            {
+                // Вызываем метод
+                $method->invoke($CarModelGenerationByIdResult);
+            }
+        }
     }
-
 }

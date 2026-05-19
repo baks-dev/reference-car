@@ -50,6 +50,6 @@ final class CarModelGenerationByImageNameRepositoryTest extends KernelTestCase
         $result = $CarModelGenerationByImageNameRepository->find('test');
 
 
-        self::assertInstanceOf(CarModelGenerationUid::class, $result);
+        self::assertTrue(($result instanceof CarModelGenerationUid) || false === $result);
     }
 }

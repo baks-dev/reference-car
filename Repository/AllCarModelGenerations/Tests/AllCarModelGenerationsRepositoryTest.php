@@ -69,5 +69,4 @@ class AllCarModelGenerationsRepositoryTest extends KernelTestCase
             break;
         }
     }
-
 }

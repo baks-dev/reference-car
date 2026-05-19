@@ -53,6 +53,7 @@ use Symfony\Component\DependencyInjection\Attribute\When;
 
 #[When(env: 'test')]
 #[Group('reference-car')]
+#[Group('reference-car-repository')]
 #[Group('reference-car-usecase')]
 final class CarModelWheelNewAdminUseCaseTest extends KernelTestCase
 {

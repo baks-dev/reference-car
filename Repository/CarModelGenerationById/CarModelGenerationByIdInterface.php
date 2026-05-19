@@ -26,7 +26,6 @@ declare(strict_types=1);
 namespace BaksDev\Reference\Car\Repository\CarModelGenerationById;
 
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
-use Generator;
 
 interface CarModelGenerationByIdInterface
 {

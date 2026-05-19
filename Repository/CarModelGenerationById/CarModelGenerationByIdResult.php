@@ -32,7 +32,7 @@ use BaksDev\Reference\Car\Type\CarModelGenerations\Name\CarModelGenerationName;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
 use BaksDev\Reference\Car\Type\CarModels\Name\CarModelName;
 
-final class CarModelGenerationByIdResult
+final readonly class CarModelGenerationByIdResult
 {
     public function __construct(
         private string $id,

@@ -26,11 +26,9 @@ declare(strict_types=1);
 namespace BaksDev\Reference\Car\UseCase\Admin\NewEdit\CarModelGeneration\Tests;
 
 use BaksDev\Core\BaksDevCoreBundle;
-use BaksDev\Reference\Car\Entity\CarBrand\Image\CarBrandImage;
 use BaksDev\Reference\Car\Entity\CarModelGeneration\CarModelGeneration;
 use BaksDev\Reference\Car\Entity\CarModelGeneration\Image\CarModelGenerationImage;
 use BaksDev\Reference\Car\Entity\CarModelGeneration\Name\CarModelGenerationName;
-use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Id\CarModelGenerationUid;
 use BaksDev\Reference\Car\Type\CarModelGenerations\Name\CarModelGenerationName as CarModelGenerationNameField;
 use BaksDev\Reference\Car\Type\CarModels\Id\CarModelUid;
