@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace BaksDev\Reference\Car\Repository\CarBrandById\Tests;
+namespace BaksDev\Reference\Car\Repository\CarBrandByName\Tests;
 
-use BaksDev\Reference\Car\Repository\CarBrandById\CarBrandByIdInterface;
-use BaksDev\Reference\Car\Repository\CarBrandById\CarBrandByIdResult;
-use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
+use BaksDev\Reference\Car\Repository\CarBrandByName\CarBrandByNameInterface;
+use BaksDev\Reference\Car\Repository\CarBrandByName\CarBrandByNameResult;
+use BaksDev\Reference\Car\Type\CarBrands\Name\CarBrandName;
 use ReflectionClass;
 use ReflectionMethod;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -18,25 +18,25 @@ use Symfony\Component\DependencyInjection\Attribute\When;
  */
 #[Group('reference-car')]
 #[When(env: 'test')]
-class CarBrandByIdRepositoryTest extends KernelTestCase
+class CarBrandByNameRepositoryTest extends KernelTestCase
 {
     public function testUseCase(): void
     {
-        /** @var CarBrandByIdInterface $CarBrandByIdRepository */
-        $CarBrandByIdRepository = self::getContainer()->get(CarBrandByIdInterface::class);
+        /** @var CarBrandByNameInterface $CarBrandByNameRepository */
+        $CarBrandByNameRepository = self::getContainer()->get(CarBrandByNameInterface::class);
 
-        $CarBrandByIdResult = $CarBrandByIdRepository
-            ->forBrand(new CarBrandUid('01985637-acba-7e07-bf7f-8598bc366a43'))
+        $CarBrandByNameResult = $CarBrandByNameRepository
+            ->forBrandName(new CarBrandName('Acura'))
             ->find();
 
-        if(false === ($CarBrandByIdResult instanceof CarBrandByIdResult))
+        if(false === ($CarBrandByNameResult instanceof CarBrandByNameResult))
         {
             self::assertFalse(false);
             return;
         }
 
         // Вызываем все геттеры
-        $reflectionClass = new ReflectionClass(CarBrandByIdResult::class);
+        $reflectionClass = new ReflectionClass(CarBrandByNameResult::class);
         $methods = $reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC);
 
         foreach($methods as $method)
@@ -45,11 +45,10 @@ class CarBrandByIdRepositoryTest extends KernelTestCase
             if($method->getNumberOfParameters() === 0)
             {
                 // Вызываем метод
-                $method->invoke($CarBrandByIdResult);
+                $method->invoke($CarBrandByNameResult);
             }
         }
 
         self::assertTrue(true);
     }
-
 }

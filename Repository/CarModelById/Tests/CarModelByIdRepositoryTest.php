@@ -50,6 +50,12 @@ final class CarModelByIdRepositoryTest extends KernelTestCase
         $CarModelByIdResult = $CarModelByIdRepository->find(new CarModelUid());
         self::assertInstanceOf(CarModelByIdResult::class, $CarModelByIdResult);
 
+        if(false === ($CarModelByIdResult instanceof CarModelByIdResult))
+        {
+            self::assertFalse(false);
+            return;
+        }
+
         // Вызываем все геттеры
         $reflectionClass = new ReflectionClass(CarModelByIdResult::class);
         $methods = $reflectionClass->getMethods(ReflectionMethod::IS_PUBLIC);
