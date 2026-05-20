@@ -137,12 +137,16 @@ class CarBrandImage extends EntityState implements UploadEntityInterface
         $this->cdn = true;
     }
 
-
     /**
      * Ext
      */
     public function getExt(): string
     {
         return $this->ext;
+    }
+
+    public function isCdn(): bool
+    {
+        return $this->cdn === true;
     }
 }

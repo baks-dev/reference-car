@@ -136,4 +136,9 @@ class CarModelGenerationImage extends EntityState implements UploadEntityInterfa
     {
         return $this->ext;
     }
+
+    public function isCdn(): bool
+    {
+        return $this->cdn === true;
+    }
 }
