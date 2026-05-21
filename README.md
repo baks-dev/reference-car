@@ -14,29 +14,31 @@ $ composer require baks-dev/reference-car
 
 ## Настройки
 
-Для отображения в выпадающих списках, добавить настройку сервиса в конфиг:
+Для парсинга необходимо установить пакет Symfony Panther.
 
-``` php
-<?php
+``` bash
+$ composer require --dev symfony/panther
+```
 
-namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+Также будет необходимо установить веб-драйвера:
 
-use BaksDev\Reference\Clothing\Choice\ReferenceChoiceSizeClothing;
+``` bash
+$ composer require --dev dbrekelmans/bdi
 
-return static function (ContainerConfigurator $configurator) {
-	
-	$services = $configurator->services()
-	    ->defaults()
-	    ->autowire(true)
-	    ->autoconfigure(true)
-	;
+$ vendor/bin/bdi detect drivers
+```
 
-	$services
-	    ->set(ReferenceChoiceCar::class)
-	    ->tag('baks.reference.choice')
-	;
-};
+Как альтернативный вариант, это можно сделать с помощью пакетного менеджера:
 
+``` bash
+# Ubuntu
+$ apt-get install chromium-chromedriver firefox-geckodriver
+
+# MacOS, using Homebrew
+$ brew install chromedriver geckodriver
+
+# Windows, using Chocolatey
+$ choco install chromedriver selenium-gecko-driver
 ```
 
 ## Журнал изменений ![Changelog](https://img.shields.io/badge/changelog-yellow)
