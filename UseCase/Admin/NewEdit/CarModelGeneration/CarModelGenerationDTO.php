@@ -55,7 +55,7 @@ final class CarModelGenerationDTO implements CarModelGenerationInterface
     {
         $this->id = new CarModelGenerationUid();
         $this->name = new CarModelGenerationNameDTO();
-        $this->image = new CarModelGenerationImageDTO();
+        //$this->image = new CarModelGenerationImageDTO();
     }
 
     public function getId(): CarModelGenerationUid
@@ -86,9 +86,9 @@ final class CarModelGenerationDTO implements CarModelGenerationInterface
 
     /** Обложка поколения */
 
-    public function getImage(): ?CarModelGenerationImageDTO
+    public function getImage(): CarModelGenerationImageDTO
     {
-        return $this->image;
+        return $this->image ?: new CarModelGenerationImageDTO();
     }
 
     public function setImage(?CarModelGenerationImageDTO $image): self

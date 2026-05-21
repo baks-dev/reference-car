@@ -104,6 +104,11 @@ class CarModelGenerationImage extends EntityState implements UploadEntityInterfa
     {
         if($dto instanceof CarModelGenerationImageInterface)
         {
+            if(empty($dto->getName()) && empty($dto->isFile()))
+            {
+                return false;
+            }
+
             return parent::setEntity($dto);
         }
 

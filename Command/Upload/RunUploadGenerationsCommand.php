@@ -96,16 +96,15 @@ class RunUploadGenerationsCommand extends Command implements ProjectUpgradeInter
              * Создаем DTO для поколения вместе с названием поколения
              */
             $carModelGenerationDTO = new CarModelGenerationDTO();
-
             $carModelGenerationDTO->setId($carModelGeneration::getUid());
-            $carModelGenerationDTO->setModel($carModelGeneration->getModelUid());
+            $carModelGenerationDTO->setModel($carModelGeneration::getModelUid());
 
             $carModelGenerationNameDTO = $carModelGenerationDTO->getName();
             $carModelGenerationNameDTO
                 ->setValue($carModelGeneration::getValue())
                 ->setUrl(strtr(
-                    strtolower((string)$carModelGeneration::getValue()),
-                    ['(' => '', ')' => '', ' ' => '-', '/' => '-']
+                    strtolower((string) $carModelGeneration::getValue()),
+                    ['(' => '', ')' => '', ' ' => '-', '/' => '-'],
                 ));
 
 
@@ -119,7 +118,7 @@ class RunUploadGenerationsCommand extends Command implements ProjectUpgradeInter
                 'Resources',
                 'upload',
                 'car_model_generation_image',
-                (string)$carModelGeneration::getUid()
+                (string) $carModelGeneration::getUid(),
             ]);
 
             $Filesystem = new Filesystem();
@@ -145,7 +144,7 @@ class RunUploadGenerationsCommand extends Command implements ProjectUpgradeInter
                     if(true === str_starts_with($info->getFilename(), 'image'))
                     {
                         $CarModelGenerationImageDTO = new CarModelGenerationImageDTO()
-                            ->setName((string)$carModelGeneration::getUid())
+                            ->setName((string) $carModelGeneration::getUid())
                             ->setExt($info->getExtension())
                             ->setSize($info->getSize());
 
@@ -156,12 +155,10 @@ class RunUploadGenerationsCommand extends Command implements ProjectUpgradeInter
                 }
             }
 
-
             /**
              * Создаем новое поколение
              */
             $carModelGeneration = $this->carModelGenerationHandler->handle($carModelGenerationDTO);
-
 
             /**
              * Выдаем сообщение в консоль об успехе загрузки поколения

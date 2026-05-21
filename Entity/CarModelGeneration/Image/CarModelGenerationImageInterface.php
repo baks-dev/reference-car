@@ -28,4 +28,6 @@ namespace BaksDev\Reference\Car\Entity\CarModelGeneration\Image;
 interface CarModelGenerationImageInterface
 {
     public function getName(): ?string;
+
+    public function isFile(): bool;
 }

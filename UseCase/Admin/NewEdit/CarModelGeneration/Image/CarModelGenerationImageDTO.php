@@ -72,13 +72,16 @@ final class CarModelGenerationImageDTO implements CarModelGenerationImageInterfa
         return $this->ext;
     }
 
-
     /** Наличие изображения на CDN */
     public function getCdn(): bool
     {
         return $this->cdn;
     }
 
+    public function isFile(): bool
+    {
+        return $this->file instanceof File;
+    }
 
     public function setFile(?File $file): self
     {

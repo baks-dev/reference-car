@@ -26,7 +26,9 @@ declare(strict_types=1);
 namespace BaksDev\Reference\Car\Repository\CarBrandByImageName;
 
 use BaksDev\Reference\Car\Type\CarBrands\Id\CarBrandUid;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 
+#[Autoconfigure(public: true)]
 interface CarBrandByImageNameInterface
 {
     public function find(string $name): CarBrandUid|false;
